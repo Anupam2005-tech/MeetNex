@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { Label } from "../ui/Label";
 import { Input } from "../ui/Input";
@@ -9,30 +9,17 @@ import {
 } from "@tabler/icons-react";
 import {
   createOAuth2Session,
-  createEmailTokenForLogin,
 } from "../appwrite/Appwrite";
 import { OAuthProvider } from "appwrite";
+import {InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator} from '../ui/OTPinput'
+import {type AppDispatch,type RootState} from '../redux/Store'
+import {useDispatch,useSelector} from 'react-redux'
+import { setButtonDisabled, setOtpSent } from "../redux/AuthSlice";
 
 export function Register() {
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setMessage("Sending magic URL...");
-    try {
-      await createEmailTokenForLogin(email);
-      setMessage("Success! Please check your email for the login link. 🚀");
-    } catch (error) {
-      setMessage("Error: Unable to send magic URL. Please try again.");
-      console.error(error);
-    }
-  };
 
   const handleOAuthLogin = (provider: OAuthProvider) => {
-    // These URLs should be set to your actual dashboard and register routes
-    // For this example, we'll use a local URL with placeholders
-    const successUrl = import.meta.env.VITE_SUCCESS_URL as string || "http://localhost:5173/dashboard";
+    const successUrl = import.meta.env.VITE_SUCCESS_URL as string || "http://localhost:5173/login";
     const failureUrl = import.meta.env.VITE_FAILURE_URL as string || "http://localhost:5173/register";
     createOAuth2Session(provider, successUrl, failureUrl);
   };
@@ -63,7 +50,7 @@ export function Register() {
             Join us today and unlock the full experience 🚀
           </p>
 
-          <form className="mb-6" onSubmit={handleSubmit}>
+          <form className="mb-6">
             <LabelInputContainer className="mb-4">
               <Label htmlFor="fullname" className="text-gray-300">
                 Full Name
@@ -85,8 +72,6 @@ export function Register() {
                 placeholder="you@example.com"
                 type="email"
                 className="bg-[#241332]/50 text-white placeholder-gray-400 border-gray-600 focus:border-purple-500"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
               />
             </LabelInputContainer>
 
@@ -98,12 +83,6 @@ export function Register() {
               <BottomGradient />
             </button>
           </form>
-
-          {message && (
-            <div className="mt-4 p-3 text-center text-sm font-medium rounded-md text-purple-300 bg-purple-900/30">
-              {message}
-            </div>
-          )}
 
           {/* Divider */}
           <div className="my-6 h-[1px] w-full bg-gradient-to-r from-transparent via-gray-600 to-transparent" />
