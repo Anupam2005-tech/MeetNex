@@ -1,24 +1,23 @@
-import React from 'react'
-import { SpotlightText } from '../reuseable Components/SpotlightText'
-import { Login } from './Login'
-import { Register } from './Register'
-import UserDashboard from './UserDashboard'
-
-
-
-
+import { lazy } from "react";
+import { SpotlightText } from "../reuseable Components/SpotlightText";
+const Navbar = lazy(() => import("../reuseable Components/Navbar"));
+const Footer = lazy(() => import("../reuseable Components/Footer"));
 
 const LandingPage = () => {
   return (
-  <>
-    <div>
-      <SpotlightText/>
-    </div>
-    <Login/>
-    <Register/>
-    <UserDashboard/>
-  </>
-  )
-}
+    <>
+      <div>
+        <Navbar />
+      </div>
 
-export default LandingPage
+      <div>
+        <SpotlightText />
+      </div>
+      <div>
+        <Footer />
+      </div>
+    </>
+  );
+};
+
+export default LandingPage;

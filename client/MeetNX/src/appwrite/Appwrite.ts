@@ -1,11 +1,10 @@
 import { Client, Account, ID, OAuthProvider } from 'appwrite';
 
 const client = new Client()
-  .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT as string)
-  .setProject(import.meta.env.VITE_APP_APPWRITE_PROJECT_ID as string);
+  .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
+  .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
 
 const account = new Account(client);
- 
  
 export const createEmailTokenForLogin = async (email: string) => {
   try {
@@ -22,7 +21,8 @@ export const createEmailTokenForLogin = async (email: string) => {
 
 export const createOAuth2Session = (
   provider: OAuthProvider,
-  successUrl: string,
+  // Fix: Add a type assertion to the default environment variable.
+  successUrl: string = import.meta.env.VITE_SUCCESS_URL as string, 
   failureUrl: string
 ) => {
   try {
@@ -32,7 +32,6 @@ export const createOAuth2Session = (
     throw error;
   }
 };
-
 
 export const completeEmailSession = async (userId: string, secret: string) => {
   try {
@@ -44,13 +43,11 @@ export const completeEmailSession = async (userId: string, secret: string) => {
   }
 };
 
-
 export const getCurrentUser = async () => {
   try {
     const user = await account.get();
     return user;
   } catch (error) {
-    // If the error is "User not logged in", we return null.
     if ((error as { code: number }).code === 401) {
       return null;
     }
@@ -58,7 +55,6 @@ export const getCurrentUser = async () => {
     throw error;
   }
 };
-
 
 export const logout = async () => {
   try {
@@ -68,4 +64,3 @@ export const logout = async () => {
     throw error;
   }
 };
-

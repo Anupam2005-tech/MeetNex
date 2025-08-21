@@ -1,17 +1,24 @@
-import './App.css'
-import LandingPage from './components/LandingPage'
-import Navbar from './reuseable Components/Navbar'
-
+import "./App.css";
+import { lazy, Suspense } from "react";
+const LandingPage = lazy(() => import("./components/LandingPage"));
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Register } from "./components/Register";
+import { Login } from "./components/Login";
+const UserDashboard=lazy(()=>import("./components/UserDashboard"))
 
 function App() {
-
-
   return (
     <>
-     <Navbar/>
-     <LandingPage/>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/dashboard" element={<UserDashboard />} />
+        </Routes>
+      </BrowserRouter>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

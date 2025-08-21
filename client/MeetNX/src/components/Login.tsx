@@ -62,17 +62,7 @@ export function Login() {
                 className="bg-[#0a192f]/50 text-white placeholder-gray-400 border-gray-600 focus:border-blue-500"
               />
             </LabelInputContainer>
-            <LabelInputContainer className="mb-6">
-              <Label htmlFor="password" className="text-gray-300">
-                Password
-              </Label>
-              <Input
-                id="password"
-                placeholder="••••••••"
-                type="password"
-                className="bg-[#0a192f]/50 text-white placeholder-gray-400 border-gray-600 focus:border-blue-500"
-              />
-            </LabelInputContainer>
+           
 
             <button
               className="group/btn cursor-pointer relative block h-11 w-full rounded-lg bg-gradient-to-br from-blue-900 to-black font-medium text-white shadow-md hover:shadow-lg transition"

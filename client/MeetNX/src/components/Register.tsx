@@ -1,17 +1,40 @@
-import React from "react";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { Label } from "../ui/Label";
 import { Input } from "../ui/Input";
 import { cn } from "../lib/Utils";
 import {
   IconBrandGoogle,
-  IconBrandApple,
   IconBrandLinkedin,
 } from "@tabler/icons-react";
+import {
+  createOAuth2Session,
+  createEmailTokenForLogin,
+} from "../appwrite/Appwrite";
+import { OAuthProvider } from "appwrite";
 
 export function Register() {
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Register submitted");
+    setMessage("Sending magic URL...");
+    try {
+      await createEmailTokenForLogin(email);
+      setMessage("Success! Please check your email for the login link. 🚀");
+    } catch (error) {
+      setMessage("Error: Unable to send magic URL. Please try again.");
+      console.error(error);
+    }
+  };
+
+  const handleOAuthLogin = (provider: OAuthProvider) => {
+    // These URLs should be set to your actual dashboard and register routes
+    // For this example, we'll use a local URL with placeholders
+    const successUrl = import.meta.env.VITE_SUCCESS_URL as string || "http://localhost:5173/dashboard";
+    const failureUrl = import.meta.env.VITE_FAILURE_URL as string || "http://localhost:5173/register";
+    createOAuth2Session(provider, successUrl, failureUrl);
   };
 
   return (
@@ -62,18 +85,8 @@ export function Register() {
                 placeholder="you@example.com"
                 type="email"
                 className="bg-[#241332]/50 text-white placeholder-gray-400 border-gray-600 focus:border-purple-500"
-              />
-            </LabelInputContainer>
-
-            <LabelInputContainer className="mb-6">
-              <Label htmlFor="password" className="text-gray-300">
-                Password
-              </Label>
-              <Input
-                id="password"
-                placeholder="••••••••"
-                type="password"
-                className="bg-[#241332]/50 text-white placeholder-gray-400 border-gray-600 focus:border-purple-500"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </LabelInputContainer>
 
@@ -86,26 +99,36 @@ export function Register() {
             </button>
           </form>
 
-          
+          {message && (
+            <div className="mt-4 p-3 text-center text-sm font-medium rounded-md text-purple-300 bg-purple-900/30">
+              {message}
+            </div>
+          )}
 
           {/* Divider */}
           <div className="my-6 h-[1px] w-full bg-gradient-to-r from-transparent via-gray-600 to-transparent" />
 
           {/* Social Logins */}
           <div className="flex flex-col space-y-4">
-            <SocialButton icon={<IconBrandGoogle size={18} />} label="Sign up with Google" />
-            <SocialButton icon={<IconBrandApple size={18} />} label="Sign up with Apple ID" />
-            <SocialButton icon={<IconBrandLinkedin size={18} />} label="Sign up with LinkedIn" />
+            <SocialButton
+              icon={<IconBrandGoogle size={18} />}
+              label="Sign up with Google"
+              onClick={() => handleOAuthLogin(OAuthProvider.Google)}
+            />
+            <SocialButton
+              icon={<IconBrandLinkedin size={18} />}
+              label="Sign up with LinkedIn"
+              onClick={() => handleOAuthLogin(OAuthProvider.Linkedin)}
+            />
           </div>
           {/* Redirect to Login */}
           <p className="text-center text-sm text-gray-400 mb-2 mt-6">
             Already have an account?{" "}
-            <a
-              href="/login"
+            <Link to={'/login'}
               className="text-purple-400 hover:text-fuchsia-400 font-medium transition"
             >
               Login here
-            </a>
+            </Link>
           </p>
         </div>
       </div>
@@ -116,13 +139,16 @@ export function Register() {
 const SocialButton = ({
   icon,
   label,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
+  onClick: () => void;
 }) => (
   <button
     className="group/btn shadow-md relative flex h-10 w-full items-center justify-center gap-3 rounded-md bg-[#1a1226]/80 px-4 font-medium text-white border border-gray-700 hover:bg-[#241332]/90 transition cursor-pointer"
     type="button"
+    onClick={onClick}
   >
     <span className="flex items-center text-gray-200">{icon}</span>
     <span className="text-sm font-medium text-gray-300">{label}</span>
