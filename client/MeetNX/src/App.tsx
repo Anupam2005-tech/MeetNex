@@ -2,9 +2,9 @@ import "./App.css";
 import { lazy, Suspense } from "react";
 const LandingPage = lazy(() => import("./components/LandingPage"));
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Register } from "./components/Register";
-import { Login } from "./components/Login";
-const UserDashboard=lazy(()=>import("./components/UserDashboard"))
+import { Register } from "./components/auth/Register";
+import { Login } from "./components/auth/Login";
+const UserDashboard=lazy(()=>import("./components/dashboard/UserDashboard"))
 
 function App() {
   return (

@@ -21,9 +21,8 @@ export const createEmailTokenForLogin = async (email: string) => {
 
 export const createOAuth2Session = (
   provider: OAuthProvider,
-  // Fix: Add a type assertion to the default environment variable.
-  successUrl: string = import.meta.env.VITE_SUCCESS_URL as string, 
-  failureUrl: string
+  successUrl: string = import.meta.env.VITE_SUCCESS_URL as string || "http://localhost:5173/dashboard", 
+  failureUrl: string= "http://localhost:5173/register"
 ) => {
   try {
     account.createOAuth2Session(provider, successUrl, failureUrl);
@@ -36,6 +35,7 @@ export const createOAuth2Session = (
 export const completeEmailSession = async (userId: string, secret: string) => {
   try {
     const session = await account.createSession(userId, secret);
+    
     return session;
   } catch (error) {
     console.error("Error completing email session:", error);

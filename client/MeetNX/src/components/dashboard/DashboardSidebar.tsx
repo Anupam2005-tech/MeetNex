@@ -1,24 +1,31 @@
 import React, { useState } from "react";
-import { Sidebar, SidebarBody, SidebarLink } from "../ui/Sidebar";
+import { Sidebar, SidebarBody, SidebarLink } from "../../ui/Sidebar";
 import {
   IconArrowLeft,
   IconArrowsJoin,
-  IconCirclePlus,
   IconHistory,
   IconHttpDelete,
   IconSettings,
+  IconVideoPlus,
 } from "@tabler/icons-react";
 import { motion } from "framer-motion";
-import { cn } from "../lib/Utils";
+import { cn } from "../../lib/Utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../../ui/Dropdown-menu"
 
 export function DashboardSidebar() {
   // Separate links into a top section and a bottom section
   const topLinks = [
     {
       label: "New Meeting",
-      href: "#",
       icon: (
-        <IconCirclePlus className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
+        <IconVideoPlus className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
       ),
     },
     {
@@ -150,4 +157,4 @@ export const LogoIcon = () => {
       <div className="h-5 w-6 shrink-0 rounded bg-black dark:bg-white" />
     </a>
   );
-};
+}; 
