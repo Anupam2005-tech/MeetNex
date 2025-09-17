@@ -26,8 +26,8 @@ export function DashboardSidebar() {
   const topLinks = [
     {
       label: "New Meeting",
-      href: "#",
-      icon: <IconVideoPlus className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />,
+      href: "",
+      icon: <IconVideoPlus className="h-6 w-6 shrink-0 text-neutral-700 dark:text-neutral-200" />,
       hasDropdown: true,
     },
     {
@@ -73,9 +73,7 @@ export function DashboardSidebar() {
       return (
         <DropdownMenu key={idx} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
-            <div className="cursor-pointer rounded-md hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors duration-200 p-1 -m-1">
-              <SidebarLink link={link} />
-            </div>
+            <SidebarLink link={link} />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-56 z-[99999] bg-black dark:bg-black border-gray-700 dark:border-gray-600"
@@ -94,19 +92,12 @@ export function DashboardSidebar() {
               <IconVideoPlus className="mr-2 h-4 w-4 text-white" />
               <span>Schedule Meeting</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-white hover:bg-gray-800 cursor-pointer">
-              <IconVideoPlus className="mr-2 h-4 w-4 text-white" />
-              <span>Start with Video Off</span>
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
     }
-    return (
-      <div key={idx} className="rounded-md hover:bg-gray-200 dark:hover:bg-neutral-700 transition-colors duration-200 p-1 -m-1">
-        <SidebarLink link={link} />
-      </div>
-    );
+
+    return <SidebarLink key={idx} link={link} />;
   };
 
   return (
@@ -152,8 +143,10 @@ export function DashboardSidebar() {
         </SidebarBody>
       </Sidebar>
 
+      {/* Divider */}
       <div className="w-px bg-neutral-300 dark:bg-neutral-700"></div>
 
+      {/* Main Content */}
       <div className="flex-1 bg-gray-50 dark:bg-neutral-900">{/* Main Content */}</div>
     </div>
   );
