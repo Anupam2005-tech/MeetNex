@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "../lib/Utils";
+import { cn } from "../../lib/Utils";
 import { useMotionTemplate, useMotionValue, motion } from "motion/react";
 
 export interface InputProps

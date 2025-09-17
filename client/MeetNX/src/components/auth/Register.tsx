@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Label } from "../../ui/Label";
-import { Input } from "../../ui/Input";
+import { Label } from "../../reuseable Components/ui/Label";
+import { Input } from "../../reuseable Components/ui/Input";
 import { cn } from "../../lib/Utils";
 import { IconBrandGoogle, IconBrandLinkedin } from "@tabler/icons-react";
 import {
@@ -18,7 +18,7 @@ import {
   InputOTPGroup,
   InputOTPSeparator,
   InputOTPSlot,
-} from "../../ui/OTPinput";
+} from "../../reuseable Components/ui/OTPinput";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner"
 

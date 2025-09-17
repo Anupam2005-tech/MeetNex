@@ -1,5 +1,5 @@
 import { cn } from "../lib/Utils";
-import { Spotlight } from "../ui/Spotlight";
+import { Spotlight } from "../reuseable Components/ui/Spotlight";
 import { motion } from "framer-motion";
 
 export function SpotlightText() {
