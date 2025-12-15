@@ -1,0 +1,12 @@
+import React from 'react'
+import {SignUp} from '@clerk/clerk-react'
+import Loader from '../ui/Loader'
+function RegisterForm() {
+  return (
+    <>
+    <SignUp oauthFlow='popup' fallback={<Loader/>} />
+    </>
+  )
+}
+
+export default RegisterForm

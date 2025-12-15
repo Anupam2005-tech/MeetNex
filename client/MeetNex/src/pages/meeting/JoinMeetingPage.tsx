@@ -2,6 +2,7 @@ import React from 'react';
 import Button from "../../components/ui/Button"; // Adjust path
 import { FaVideo } from 'react-icons/fa';
 import Dropdown from '../../components/ui/Dropdown'; // Adjust path
+import LocalVideo from '@/components/video/LocalVideo';
 
 const JoinMeetingPage = () => {
   return (
@@ -16,12 +17,8 @@ const JoinMeetingPage = () => {
           
           {/* Video Box */}
           <div className="aspect-video bg-black rounded-lg overflow-hidden flex justify-center items-center shadow-lg">
-            <video
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-            />
+            <LocalVideo/>
+            
           </div>
 
           {/* Dropdown under video */}
