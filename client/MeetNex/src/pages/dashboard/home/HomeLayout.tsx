@@ -1,11 +1,12 @@
-import LaserFlow from '../home/homePageComponents/MainGrid';
+import LaserFlow from './homePageComponents/LaserFlow';
 import { useRef } from 'react';
 import Navbar from './Navbar';
+import HeroShowcase from './homePageComponents/HeroShowcase';
 
 
 
 // Basic Usage
-<div style={{ height: '700px', position: 'relative', overflow: 'hidden' }}>
+<div style={{ height: '500px', position: 'relative', overflow: 'hidden' }}>
   <LaserFlow />
 </div>
 
@@ -14,6 +15,7 @@ export default function HomeLayout() {
   const revealImgRef = useRef<HTMLImageElement>(null);
 
   return (
+  <>
     <div 
       style={{ 
         height: '100vh', 
@@ -81,7 +83,7 @@ export default function HomeLayout() {
 
       <img
         ref={revealImgRef}
-        src="/"
+        src="/hero-illustration.jpg"
         alt="Reveal effect"
         style={{
           position: 'absolute',
@@ -100,5 +102,7 @@ export default function HomeLayout() {
         } as React.CSSProperties & Record<string, any>}
       />
     </div>
+    <HeroShowcase/>
+  </>
   );
 }

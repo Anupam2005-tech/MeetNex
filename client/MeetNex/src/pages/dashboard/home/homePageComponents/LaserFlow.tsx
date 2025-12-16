@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, {useLayoutEffect, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 type Props = {
@@ -308,7 +308,7 @@ export const LaserFlow: React.FC<Props> = ({
     return { r: ((n >> 16) & 255) / 255, g: ((n >> 8) & 255) / 255, b: (n & 255) / 255 };
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const mount = mountRef.current!;
     const renderer = new THREE.WebGLRenderer({
       antialias: false,
