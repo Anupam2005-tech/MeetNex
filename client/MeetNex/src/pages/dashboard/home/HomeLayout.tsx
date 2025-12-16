@@ -2,6 +2,8 @@ import LaserFlow from './homePageComponents/LaserFlow';
 import { useRef } from 'react';
 import Navbar from './Navbar';
 import HeroShowcase from './homePageComponents/HeroShowcase';
+import InterectiveRevel from './homePageComponents/InterectiveRevel';
+import Footer from './homePageComponents/Footer';
 
 
 
@@ -48,6 +50,7 @@ export default function HomeLayout() {
       />
       {/* navbar component */}
       <Navbar/>
+
       <div style={{
         position: 'absolute',
         top: '50%',
@@ -67,13 +70,13 @@ export default function HomeLayout() {
       }}>
     
   <img
-    src="/download.png"
+    src="/main.avif"
     alt="Preview"
     draggable={false}
     style={{
-      maxWidth: '90%',
-      maxHeight: '90%',
-      objectFit: 'contain',
+      maxWidth: '100%',
+      maxHeight: '100%',
+      objectFit: 'cover',
       imageRendering: 'auto',
       userSelect: 'none',
       pointerEvents: 'none',
@@ -103,6 +106,8 @@ export default function HomeLayout() {
       />
     </div>
     <HeroShowcase/>
+    <InterectiveRevel/>
+    <Footer/>
   </>
   );
 }

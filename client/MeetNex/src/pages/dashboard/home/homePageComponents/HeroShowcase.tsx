@@ -3,7 +3,7 @@ import Card from "../../../../components/ui/Card";
 
 function HeroShowcase() {
   return (
-    <section className="w-full min-h-screen bg-neutral-50 px-6 md:px-12 py-24">
+    <section className="w-full min-h-screen bg-neutral-100 px-6 md:px-12 py-24">
       {/* Heading */}
       <div className="max-w-6xl mx-auto mb-16">
         <h2 className="text-5xl md:text-6xl font-semibold mb-6">
