@@ -1,35 +1,49 @@
-// mute function
-export function muteMic(stream?: MediaStream) {
-  if (!stream) return;
+// mute mic
+export function muteMic(stream?: MediaStream): boolean {
+  if (!stream) return false;
 
   stream.getAudioTracks().forEach(track => {
     track.enabled = false;
   });
+
+  return true;
 }
 
-// unMute function
-export function unmuteMic(stream?: MediaStream) {
-  if (!stream) return;
+// unmute mic
+export function unmuteMic(stream?: MediaStream): boolean {
+  if (!stream) return false;
 
   stream.getAudioTracks().forEach(track => {
     track.enabled = true;
   });
+
+  return true;
 }
 
-// audio toggle 
-export function toggleMic(stream?: MediaStream) {
-  if (!stream) return;
+// toggle mic
+export function toggleMic(stream?: MediaStream): boolean {
+  if (!stream) return false;
+
+  let enabled = true;
 
   stream.getAudioTracks().forEach(track => {
     track.enabled = !track.enabled;
+    enabled = track.enabled;
   });
+
+  return enabled; // return new state
 }
 
-// video toggle
-export function toggleVideo(stream?:MediaStream){
-    if(!stream) return
+// toggle video
+export function toggleVideo(stream?: MediaStream): boolean {
+  if (!stream) return false;
 
-    stream.getVideoTracks().forEach(track=>{
-        track.enabled=!track.enabled
-    })
+  let enabled = true;
+
+  stream.getVideoTracks().forEach(track => {
+    track.enabled = !track.enabled;
+    enabled = track.enabled;
+  });
+
+  return enabled;
 }

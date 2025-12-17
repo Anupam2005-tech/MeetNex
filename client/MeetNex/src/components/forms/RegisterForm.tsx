@@ -4,7 +4,7 @@ import Loader from '../ui/Loader'
 function RegisterForm() {
   return (
     <>
-    <SignUp oauthFlow='popup' fallback={<Loader/>} />
+    <SignUp oauthFlow='popup' fallback={<Loader/>} fallbackRedirectUrl={'/home'}/>
     </>
   )
 }
