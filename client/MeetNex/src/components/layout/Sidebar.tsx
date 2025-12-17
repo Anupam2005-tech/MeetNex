@@ -2,10 +2,13 @@ import { cn } from "../../lib/Utils";
 import React, { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { IconMenu2, IconX } from "@tabler/icons-react";
+import { Link } from "react-router-dom";
+
+/* ================= TYPES ================= */
 
 interface Links {
   label: string;
-  href: string;
+  to?: string; // ✅ react-router path
   icon: React.JSX.Element | React.ReactNode;
 }
 
@@ -14,6 +17,8 @@ interface SidebarContextProps {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   animate: boolean;
 }
+
+/* ================= CONTEXT ================= */
 
 const SidebarContext = createContext<SidebarContextProps | undefined>(
   undefined
@@ -26,6 +31,8 @@ export const useSidebar = () => {
   }
   return context;
 };
+
+/* ================= PROVIDER ================= */
 
 export const SidebarProvider = ({
   children,
@@ -68,6 +75,8 @@ export const Sidebar = ({
   );
 };
 
+/* ================= BODY ================= */
+
 export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
   return (
     <>
@@ -77,12 +86,15 @@ export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
   );
 };
 
+/* ================= DESKTOP ================= */
+
 export const DesktopSidebar = ({
   className,
   children,
   ...props
 }: React.ComponentProps<typeof motion.div>) => {
   const { open, setOpen, animate } = useSidebar();
+
   return (
     <motion.div
       className={cn(
@@ -101,12 +113,15 @@ export const DesktopSidebar = ({
   );
 };
 
+/* ================= MOBILE ================= */
+
 export const MobileSidebar = ({
   className,
   children,
   ...props
 }: React.ComponentProps<"div">) => {
   const { open, setOpen } = useSidebar();
+
   return (
     <div
       className={cn(
@@ -121,6 +136,7 @@ export const MobileSidebar = ({
           onClick={() => setOpen(!open)}
         />
       </div>
+
       <AnimatePresence>
         {open && (
           <motion.div
@@ -150,6 +166,8 @@ export const MobileSidebar = ({
   );
 };
 
+/* ================= LINK ================= */
+
 export const SidebarLink = ({
   link,
   className,
@@ -159,15 +177,9 @@ export const SidebarLink = ({
   className?: string;
 }) => {
   const { open, animate } = useSidebar();
-  return (
-    <a
-      href={link.href}
-      className={cn(
-        "flex items-center justify-start gap-2 group/sidebar py-2 text-gray-700 hover:text-gray-900",
-        className
-      )}
-      {...props}
-    >
+
+  const content = (
+    <>
       {link.icon}
       <motion.span
         animate={{
@@ -178,6 +190,35 @@ export const SidebarLink = ({
       >
         {link.label}
       </motion.span>
-    </a>
+    </>
+  );
+
+  // ✅ If route exists → React Router Link
+  if (link.to) {
+    return (
+      <Link
+        to={link.to}
+        className={cn(
+          "flex items-center justify-start gap-2 group/sidebar py-2 text-gray-700 hover:text-gray-900",
+          className
+        )}
+        {...props}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  // ✅ Non-routing (dropdown parents, actions)
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-start gap-2 group/sidebar py-2 text-gray-700 hover:text-gray-900 cursor-pointer",
+        className
+      )}
+      {...props}
+    >
+      {content}
+    </div>
   );
 };
