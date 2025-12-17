@@ -39,7 +39,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         className={cn(
-          "relative w-full max-w-lg rounded-xl bg-gray-200 shadow-xl border border-gray-300",
+          "relative w-full max-w-lg rounded-xl ",
           className
         )}
         onClick={(e) => e.stopPropagation()}
