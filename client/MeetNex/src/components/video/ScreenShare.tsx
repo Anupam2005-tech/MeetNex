@@ -1,29 +1,30 @@
-import { useRef } from "react";
-import { useScreen } from "@/mediaControl/useScreen";
+import { useEffect, useRef } from "react";
 
-export default function ScreenShare() {
+interface ScreenShareProps {
+  stream: MediaStream;
+}
+
+export default function ScreenShare({ stream }: ScreenShareProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const shareScreen = async () => {
-    const screenStream = await useScreen(() => {
-      console.log("Screen sharing stopped");
-    });
-
+  useEffect(() => {
     if (videoRef.current) {
-      videoRef.current.srcObject = screenStream;
+      videoRef.current.srcObject = stream;
     }
-  };
+  }, [stream]);
 
   return (
-    <div className="space-y-4">
-      <button onClick={shareScreen}>Share Screen</button>
-
+    <div className="relative w-full h-full rounded-xl overflow-hidden bg-black">
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        className="w-full rounded-lg"
+        muted
+        className="w-full h-full object-contain"
       />
+      <span className="absolute top-2 left-2 text-xs bg-black/60 px-2 py-1 rounded">
+        Screen sharing
+      </span>
     </div>
   );
 }

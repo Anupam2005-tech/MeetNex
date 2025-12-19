@@ -31,4 +31,6 @@
   }
   
 
-  
+  .mirror {
+  transform: rotateY(180deg);
+}
