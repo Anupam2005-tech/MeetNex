@@ -7,8 +7,9 @@ import {
   PhoneIcon,
   Users,
   MonitorUp,
+  MessageSquare,
 } from "lucide-react";
-import MeetingTimer from "@/pages/meeting/MeetingTimer";
+
 
 interface ControlsProps {
   isMuted: boolean;
@@ -17,29 +18,28 @@ interface ControlsProps {
   onToggleCamera: () => void;
   onToggleParticipants: () => void;
   onShareScreen: () => void;
+  onToggleChat: () => void;
   onLeave: () => void;
 }
+
 const Controls: React.FC<ControlsProps> = ({
   isMuted,
   isCameraOff,
   onToggleMic,
   onToggleCamera,
-  onToggleParticipants,
   onShareScreen,
+  onToggleParticipants,
+  onToggleChat,
   onLeave,
 }) => {
   return (
     <div className="fixed inset-0 pointer-events-none z-50">
 
-      {/* TIMER – bottom left */}
-      <div className="absolute bottom-4 left-4 pointer-events-auto">
-        <MeetingTimer />
-      </div>
-
       {/* CONTROLS – bottom center */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 pointer-events-auto
-        flex gap-3 bg-gray-900 bg-opacity-90 px-3 py-2 rounded-full shadow-2xl">
-
+      <div
+        className="absolute bottom-1.5 left-1/2 -translate-x-1/2 pointer-events-auto
+        flex gap-3 bg-gray-900 bg-opacity-90 px-3 py-2 rounded-full shadow-2xl"
+      >
         {/* Mic */}
         <button
           onClick={onToggleMic}
@@ -76,6 +76,14 @@ const Controls: React.FC<ControlsProps> = ({
           <Users size={20} />
         </button>
 
+        {/* Chat */}
+        <button
+          onClick={onToggleChat}
+          className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-gray-700"
+        >
+          <MessageSquare size={20} />
+        </button>
+
         {/* Leave */}
         <button
           onClick={onLeave}
@@ -87,6 +95,5 @@ const Controls: React.FC<ControlsProps> = ({
     </div>
   );
 };
-
 
 export default Controls;
