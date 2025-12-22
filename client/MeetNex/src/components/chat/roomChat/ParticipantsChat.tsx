@@ -34,15 +34,17 @@ const handleSend = (text: string, attachments: Attachment[]) => {
   setMessages(prev => [...prev, newMessage]);
 };
   return (
-    <>
-      <div className="flex-1 overflow-y-auto px-4 py-2">
-        <ChatBox messages={messages} />
-      </div>
-      <div className="p-4 bg-white/50 border-t border-gray-100">
-        <ChatInput onSend={handleSend} placeholder="Chat with everyone..." />
-      </div>
-    </>
-  );
+  <div className="flex flex-col h-full">
+    <div className="flex-1 overflow-y-auto px-4 py-2">
+      <ChatBox messages={messages} />
+    </div>
+
+    <div className="p-4 bg-white/50 border-t border-gray-100">
+      <ChatInput onSend={handleSend} placeholder="Chat with everyone..." />
+    </div>
+  </div>
+);
+
 };
 
 export default ParticipantsChat;

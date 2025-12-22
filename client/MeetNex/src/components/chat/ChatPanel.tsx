@@ -30,34 +30,48 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
 
         {/* TABS CONTROLLER */}
         <div className="relative flex p-1 bg-gray-100/80 rounded-2xl border border-black/5">
-          <div 
-            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm transition-transform duration-300 ease-out ${
-              activeTab === "ai" ? "translate-x-full" : "translate-x-0"
-            }`}
+          <div
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm transition-transform duration-300 ease-out ${activeTab === "ai" ? "translate-x-full" : "translate-x-0"
+              }`}
           />
           <button
             onClick={() => setActiveTab("participants")}
-            className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold transition-colors ${
-              activeTab === "participants" ? "text-blue-600" : "text-gray-500"
-            }`}
+            className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold transition-colors ${activeTab === "participants" ? "text-blue-600" : "text-gray-500"
+              }`}
           >
             <Users size={16} /> Participants
           </button>
           <button
             onClick={() => setActiveTab("ai")}
-            className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold transition-colors ${
-              activeTab === "ai" ? "text-indigo-600" : "text-gray-500"
-            }`}
+            className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold transition-colors ${activeTab === "ai" ? "text-indigo-600" : "text-gray-500"
+              }`}
           >
-            <Sparkles size={16} /> AI Assistant
+            <Sparkles size={16} /> Lumi
           </button>
         </div>
       </div>
 
       {/* DYNAMIC CONTENT AREA */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {activeTab === "participants" ? <ParticipantsChat /> : <AIChat />}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <div
+          className={`absolute  inset-0 transition-opacity duration-300 ${activeTab === "participants"
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+            }`}
+        >
+          <ParticipantsChat />
+        </div>
+
+        <div
+          className={`absolute inset-0 transition-opacity duration-300 ${activeTab === "ai"
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+            }`}
+        >
+          <AIChat />
+        </div>
       </div>
+
     </aside>
   );
 };

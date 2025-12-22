@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FileText, MoreVertical, Download, ExternalLink } from "lucide-react";
+import { FileText, MoreVertical, Download } from "lucide-react";
 import { cn } from "@/lib/Utils";
 
 

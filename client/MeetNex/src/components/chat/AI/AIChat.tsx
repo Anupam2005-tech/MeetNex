@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import ChatBox from "../ChatBox";
 import ChatInput from "../ChatInput";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Info } from "lucide-react";
+import { GoogleGemini } from "@/utils/gemini";
+import '../../../App.css'
 
 type Message = {
   id: string;
@@ -14,45 +16,95 @@ const AIChat: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
 
-  const handleSend = (text: string) => {
+  const handleSend = async (text: string) => {
+    if (!text.trim() || isTyping) return;
+
     const userMsg: Message = {
       id: crypto.randomUUID(),
       text,
       sender: "me",
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
-    setMessages(prev => [...prev, userMsg]);
 
-    // AI logic is fully contained here now
+    setMessages((prev) => [...prev, userMsg]);
     setIsTyping(true);
-    setTimeout(() => {
+
+    try {
+      const aiResponse = await GoogleGemini(text);
+
       const aiMsg: Message = {
         id: crypto.randomUUID(),
-        text: `As your AI assistant, I've analyzed: "${text}". How else can I help?`,
+        text: aiResponse,
         sender: "other",
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
-      setMessages(prev => [...prev, aiMsg]);
+
+      setMessages((prev) => [...prev, aiMsg]);
+    } catch (error) {
+       console.error(error);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   return (
-    <>
-      <div className="flex-1 overflow-y-auto px-4 py-2">
+    <div className="flex flex-col h-full">
+      {/* CHAT AREA */}
+      <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-6 space-y-4 scroll-smooth">
         {messages.length === 0 && (
-          <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-40">
-            <Sparkles size={32} className="mb-4 text-indigo-400" />
-            <p className="text-sm font-medium">Ask the AI to summarize the meeting or take notes.</p>
+          <div className="h-full flex flex-col items-center justify-center text-center p-8 animate-fade-in">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-100 mb-4 shadow-sm">
+              <Sparkles size={26} className="text-indigo-500" />
+            </div>
+            <p className="text-sm font-semibold text-indigo-900">
+              Ask Lumi anything
+            </p>
+            <p className="text-xs text-indigo-700 mt-1 opacity-70">
+              Smart, fast answers — right when you need them
+            </p>
+            
+            {/* DISCLAIMER 1: File capability (Empty State) */}
+            <div className="mt-6 flex items-start gap-2 max-w-[250px] bg-amber-50 p-3 rounded-lg border border-amber-100/50">
+              <Info size={14} className="text-amber-600 mt-0.5 shrink-0" />
+              <p className="text-[11px] text-amber-800 text-left leading-relaxed">
+                Currently, Lumi can only process text. <strong>Image and file uploads</strong> are not supported yet. We are working hard to get this for you.
+              </p>
+            </div>
           </div>
         )}
+
         <ChatBox messages={messages} />
-        {isTyping && <p className="text-[10px] text-indigo-400 font-bold animate-pulse ml-4 mt-2">AI is thinking...</p>}
+
+        {isTyping && (
+          <div className="ml-4 mt-2 flex items-center gap-2 animate-fade-in">
+            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" />
+            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce delay-150" />
+            <span className="w-2 h-2 rounded-full bg-indigo-400 animate-bounce delay-300" />
+            <span className="text-[10px] font-semibold text-indigo-400 ml-1">
+              Lumi is thinking…
+            </span>
+          </div>
+        )}
       </div>
-      <div className="p-4 bg-indigo-50/30 border-t border-indigo-100">
-        <ChatInput onSend={handleSend} placeholder="Ask AI anything..." />
+
+      {/* INPUT AREA */}
+      <div className="p-4 bg-indigo-50/30 border-t border-indigo-100 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto space-y-2">
+          <ChatInput onSend={handleSend} placeholder="Ask Lumi anything..." />
+          
+          {/* DISCLAIMER 2: AI Accuracy (Sticky Footer) */}
+          <p className="text-[10px] text-center text-indigo-400 font-bold ">
+            Lumi can make mistakes. Check important info.
+          </p>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 
