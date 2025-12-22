@@ -1,49 +1,118 @@
-// mute mic
+/* =====================================================
+   AUDIO (MIC) CONTROLS
+   ===================================================== */
+
+// Mute microphone (SOFT)
 export function muteMic(stream?: MediaStream): boolean {
   if (!stream) return false;
 
-  stream.getAudioTracks().forEach(track => {
-    track.enabled = false;
-  });
+  const tracks = stream.getAudioTracks();
+  if (!tracks.length) return false;
 
+  tracks.forEach(track => (track.enabled = false));
   return true;
 }
 
-// unmute mic
+// Unmute microphone (SOFT)
 export function unmuteMic(stream?: MediaStream): boolean {
   if (!stream) return false;
 
-  stream.getAudioTracks().forEach(track => {
-    track.enabled = true;
+  const tracks = stream.getAudioTracks();
+  if (!tracks.length) return false;
+
+  tracks.forEach(track => (track.enabled = true));
+  return true;
+}
+
+// Toggle microphone (SOFT)
+export function toggleMic(stream?: MediaStream): boolean {
+  if (!stream) return false;
+
+  const track = stream.getAudioTracks()[0];
+  if (!track) return false;
+
+  track.enabled = !track.enabled;
+  return track.enabled;
+}
+
+// Check mic state
+export function isMicEnabled(stream?: MediaStream): boolean {
+  if (!stream) return false;
+  const track = stream.getAudioTracks()[0];
+  return !!track?.enabled;
+}
+
+/* =====================================================
+   VIDEO (CAMERA) CONTROLS — ZOOM / MEET LEVEL
+   ===================================================== */
+
+/**
+ * Turn camera OFF completely (LED OFF)
+ */
+export function stopCamera(stream?: MediaStream): boolean {
+  if (!stream) return false;
+
+  const tracks = stream.getVideoTracks();
+  if (!tracks.length) return false;
+
+  tracks.forEach(track => {
+    track.stop();              // 🔥 releases hardware
+    stream.removeTrack(track); // remove from stream
   });
 
   return true;
 }
 
-// toggle mic
-export function toggleMic(stream?: MediaStream): boolean {
+export async function restartCamera(
+  stream?: MediaStream
+): Promise<boolean> {
   if (!stream) return false;
 
-  let enabled = true;
+  try {
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+    });
 
-  stream.getAudioTracks().forEach(track => {
-    track.enabled = !track.enabled;
-    enabled = track.enabled;
-  });
+    const newTrack = newStream.getVideoTracks()[0];
+    if (!newTrack) return false;
 
-  return enabled; // return new state
+    stream.addTrack(newTrack);
+    return true;
+  } catch (err) {
+    console.error("Camera restart failed:", err);
+    return false;
+  }
+}
+ 
+export async function toggleCamera(
+  stream?: MediaStream
+): Promise<boolean> {
+  if (!stream) return false;
+
+  const hasVideo = stream.getVideoTracks().length > 0;
+
+  if (hasVideo) {
+    stopCamera(stream);
+    return false;
+  } else {
+    return await restartCamera(stream);
+  }
 }
 
-// toggle video
-export function toggleVideo(stream?: MediaStream): boolean {
+// Check camera state
+export function isCameraEnabled(stream?: MediaStream): boolean {
   if (!stream) return false;
+  return stream.getVideoTracks().length > 0;
+}
 
-  let enabled = true;
+/* =====================================================
+   FULL MEDIA CLEANUP (LEAVE CALL)
+   ===================================================== */
 
-  stream.getVideoTracks().forEach(track => {
-    track.enabled = !track.enabled;
-    enabled = track.enabled;
+export function stopAllMedia(stream?: MediaStream): void {
+  if (!stream) return;
+
+  stream.getTracks().forEach(track => {
+    track.stop();
   });
-
-  return enabled;
 }

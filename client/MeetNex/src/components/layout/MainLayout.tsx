@@ -8,7 +8,7 @@ import {
 } from "@tabler/icons-react";
 import MainLayoutText from "./MainLayoutText";
 import { Link } from "react-router-dom";
-import { UserButton } from "@clerk/clerk-react";
+import { UserButton} from "@clerk/clerk-react";
 
 /* ================= MAIN LAYOUT ================= */
 export function MainLayout() {
@@ -66,39 +66,27 @@ export function MainLayout() {
                       setSelected(link.label);
                     }}
                   >
-                    {link.dropdown ? (
-                      <SidebarLink
-                        link={link}
-                        className={`rounded-md px-2 py-2 transition
-                          ${selected === link.label
+                    <SidebarLink
+                      link={link}
+                      className={`rounded-md px-2 py-2 transition
+                        ${
+                          selected === link.label
                             ? "bg-blue-50 border-l-4 border-blue-600 text-blue-600"
                             : "hover:bg-gray-100"
-                          }`}
-                      />
-                    ) : (
-                      <Link to={link.to}>
-                        <SidebarLink
-                          link={link}
-                          className={`rounded-md px-2 py-2 transition
-                            ${selected === link.label
-                              ? "bg-blue-50 border-l-4 border-blue-600 text-blue-600"
-                              : "hover:bg-gray-100"
-                            }`}
-                        />
-                      </Link>
-                    )}
+                        }`}
+                    />
                   </div>
 
                   {/* DROPDOWN */}
                   {link.dropdown && meetingDropdownOpen === link.label && (
                     <div className="ml-6 mt-1 flex flex-col gap-2 rounded-md border p-2">
                       {link.dropdown.map((sub, i) => (
-                        <Link key={i} to={sub.to}>
-                          <SidebarLink
-                            link={sub}
-                            className="rounded-md px-2 py-1 hover:bg-gray-100"
-                          />
-                        </Link>
+                        /* ❌ Link wrapper REMOVED (bug fix) */
+                        <SidebarLink
+                          key={i}
+                          link={sub}
+                          className="rounded-md px-2 py-1 hover:bg-gray-100"
+                        />
                       ))}
                     </div>
                   )}
@@ -108,7 +96,7 @@ export function MainLayout() {
           </div>
 
           <div className="px-2 pb-4">
-            <div className="flex items-center gap-2 px-2  rounded-md hover:bg-gray-100">
+            <div className="flex items-center gap-2 px-2 rounded-md hover:bg-gray-100">
               <UserButton
                 showName
                 appearance={{
@@ -119,7 +107,6 @@ export function MainLayout() {
                   },
                 }}
               />
-
             </div>
           </div>
         </SidebarBody>

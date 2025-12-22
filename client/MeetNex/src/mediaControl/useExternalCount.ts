@@ -1,21 +1,41 @@
-export async function getExternalDeviceCount() {
-  try {
-    const devices = await navigator.mediaDevices.enumerateDevices();
+export interface MediaDeviceOption {
+  deviceId: string;
+  label: string;
+}
 
-    return {
-      cameras: devices.filter(d => d.kind === "videoinput").length,
-      mics: devices.filter(d => d.kind === "audioinput").length,
-      speakers: devices.filter(d => d.kind === "audiooutput").length,
-    };
-  } catch (err) {
-    throw new Error("Failed to fetch devices");
-  }
+export async function getExternalDevices(): Promise<{
+  cameras: MediaDeviceOption[];
+  mics: MediaDeviceOption[];
+  speakers: MediaDeviceOption[];
+}> {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+
+  return {
+    cameras: devices
+      .filter(d => d.kind === "videoinput")
+      .map(d => ({
+        deviceId: d.deviceId,
+        label: d.label || "Camera",
+      })),
+
+    mics: devices
+      .filter(d => d.kind === "audioinput")
+      .map(d => ({
+        deviceId: d.deviceId,
+        label: d.label || "Microphone",
+      })),
+
+    speakers: devices
+      .filter(d => d.kind === "audiooutput")
+      .map(d => ({
+        deviceId: d.deviceId,
+        label: d.label || "Speaker",
+      })),
+  };
 }
 
 export function onDeviceChanges(callback: () => void) {
-  navigator.mediaDevices.ondevicechange = callback;
-
-  return () => {
-    navigator.mediaDevices.ondevicechange = null;
-  };
+  navigator.mediaDevices.addEventListener("devicechange", callback);
+  return () =>
+    navigator.mediaDevices.removeEventListener("devicechange", callback);
 }

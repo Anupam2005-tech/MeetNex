@@ -1,7 +1,27 @@
-import React from "react";
+import React, { useEffect } from "react";
 import LoginForm from "@/components/forms/LoginForm";
+import { useAuth } from "@clerk/clerk-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function LoginPage() {
+  const { isSignedIn, isLoaded } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // 👇 Preserve intended route
+  const from = location.state?.from?.pathname || "/home";
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      navigate(from, { replace: true });
+    }
+  }, [isLoaded, isSignedIn, from, navigate]);
+
+  // ⏳ Wait for Clerk before rendering
+  if (!isLoaded) {
+    return null; // or loader if you want
+  }
+
   return (
     <div className="relative min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
 
@@ -28,17 +48,14 @@ function LoginPage() {
             Skip repetitive and manual video-meeting tasks.
             Meet smarter, faster and more securely with MeetNeX.
           </p>
-          
         </div>
+
         <div>
-                   <img
-          src="/loginBanner.png"
-          alt="MeetNeX Login Illustration"
-          className="
-            w-[420px]
-            xl:w-[480px]
-             "
-        />
+          <img
+            src="/loginBanner.png"
+            alt="MeetNeX Login Illustration"
+            className="w-[420px] xl:w-[480px]"
+          />
         </div>
 
         {/* BOTTOM FOOTER */}
@@ -54,9 +71,7 @@ function LoginPage() {
         </div>
       </div>
 
- 
-      </div>
-
+    </div>
   );
 }
 

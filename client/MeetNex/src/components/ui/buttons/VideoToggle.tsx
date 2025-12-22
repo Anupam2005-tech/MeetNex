@@ -1,26 +1,25 @@
-import { useState } from "react";
-import { Video, VideoOff } from "lucide-react";
+import React, { useState } from "react";
+import { FaVideo, FaVideoSlash } from "react-icons/fa";
 
-function VideoToggle() {
-  const [isCameraOff, setIsCameraOff] = useState(false);
+interface VideoToggleProps {
+  isCameraOff: boolean;
+  onToggle: () => void;
+}
 
+const VideoToggle: React.FC<VideoToggleProps> = ({ isCameraOff, onToggle }) => {
   return (
     <button
-      onClick={() => setIsCameraOff(!isCameraOff)}
-      title={isCameraOff ? "Turn camera on" : "Turn camera off"}
-      className={`
-      w-14 h-14 hover:cursor-pointer rounded-full
-        flex items-center justify-center
-        border border-white/30
-        text-white
-        hover:bg-white/10
-        transition-all duration-200
-        
-      `}
+      onClick={onToggle}
+      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+      title={isCameraOff ? "Turn on camera" : "Turn off camera"}
     >
-      {isCameraOff ? <VideoOff size={30} /> : <Video size={30} />}
+      {isCameraOff ? (
+        <FaVideoSlash className="text-red-500 text-lg" />
+      ) : (
+        <FaVideo className="text-white text-lg" />
+      )}
     </button>
   );
-}
+};
 
 export default VideoToggle;
