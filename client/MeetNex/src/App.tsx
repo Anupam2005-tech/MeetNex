@@ -1,13 +1,18 @@
 import "./App.css";
-import RoomPage from "./pages/meeting/RoomPage";
 import Approuter from "./routes/router";
+import { ClerkProvider } from "@clerk/clerk-react";
+import AuthBoundary from "./pages/auth/AuthBoundary";
+import JoinMeetingPage from "./pages/meeting/JoinMeetingPage";
 
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 function App() {
   return (
-
-  <>
-    <Approuter/>
-  </>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+      <AuthBoundary>
+        <Approuter />
+        {/* <JoinMeetingPage/> */}
+      </AuthBoundary>
+    </ClerkProvider>
   );
 }
 

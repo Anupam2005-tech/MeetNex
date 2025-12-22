@@ -1,45 +1,103 @@
+import { lazy, Suspense } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
+
 import { MainLayout } from "@/components/layout/MainLayout";
 import Settings from "@/components/layout/Settings";
 import Loader from "@/components/ui/Loader";
 import HomeLayout from "@/pages/dashboard/home/HomeLayout";
 import RoomPage from "@/pages/meeting/RoomPage";
-import { lazy, Suspense } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
-// lazy load
+import { ProtectedRoute } from "./ProtectedRoutes";
 
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage"));
 
 function Approuter() {
   return (
-    <>
-      <Router>
+    <Router>
       <Suspense
-        fallback={
-         <Loader/>
+        fallback={<Loader/>
         }
       >
         <Routes>
-          {/* public routes */}
-          <Route path="/" element={<HomeLayout />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
 
-          {/* protected routes */}
-          <Route path="/home" element={<MainLayout />} />
-          <Route path="/settings" element={<Settings/>}/>
+          {/* ROOT */}
+          <Route
+            path="/"
+            element={
+              <>
+                <SignedIn>
+                  <Navigate to="/home" replace />
+                </SignedIn>
+                <SignedOut>
+                  <HomeLayout />
+                </SignedOut>
+              </>
+            }
+          />
 
+          {/* HOME */}
+          <Route
+            path="/home"
+            element={
+              <ProtectedRoute>
+                <MainLayout />
+              </ProtectedRoute>
+            }
+          />
 
+          {/* AUTH */}
+          <Route
+            path="/login"
+            element={
+              <>
+                <SignedIn>
+                  <Navigate to="/home" replace />
+                </SignedIn>
+                <SignedOut>
+                  <LoginPage />
+                </SignedOut>
+              </>
+            }
+          />
 
-          {/* video call */}
+          <Route
+            path="/register"
+            element={
+              <>
+                <SignedIn>
+                  <Navigate to="/home" replace />
+                </SignedIn>
+                <SignedOut>
+                  <RegisterPage />
+                </SignedOut>
+              </>
+            }
+          />
 
-          <Route path="/room/:roomId" element={<RoomPage />} />
+          {/* PROTECTED */}
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/room/:roomId"
+            element={
+              <ProtectedRoute>
+                <RoomPage />
+              </ProtectedRoute>
+            }
+          />
+
         </Routes>
       </Suspense>
     </Router>
-    </>
-  )
+  );
 }
 
-export default Approuter
+export default Approuter;
