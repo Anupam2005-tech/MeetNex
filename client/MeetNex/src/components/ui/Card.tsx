@@ -1,7 +1,6 @@
 import React from "react";
 
 type CardProps = {
-  // We change these to be optional so they don't override className logic
   width?: string;
   height?: string;
   bgColor?: string;
@@ -24,19 +23,22 @@ type CardProps = {
 };
 
 function Card({
-  width = "",        // Default empty so className takes priority
-  height = "",       // Default empty so className takes priority
+  width = "",
+  height = "",
   bgColor = "bg-neutral-900",
   radius = "rounded-3xl",
+
   title,
   description,
   gradient,
   imageSrc,
   videoSrc,
+
   mediaFit = "cover",
   autoPlay = true,
   muted = true,
   loop = true,
+
   className = "",
   children,
 }: CardProps) {
@@ -52,30 +54,59 @@ function Card({
       {(imageSrc || videoSrc) && (
         <div className="absolute inset-0 z-0">
           {imageSrc && (
-            <img src={imageSrc} alt="" draggable={false} className={`w-full h-full object-${mediaFit}`} />
+            <img
+              src={imageSrc}
+              alt=""
+              draggable={false}
+              className={`w-full h-full ${
+                mediaFit === "cover" ? "object-cover" : "object-contain"
+              }`}
+            />
           )}
+
           {videoSrc && (
-            <video src={videoSrc} autoPlay={autoPlay} muted={muted} loop={loop} playsInline className={`w-full h-full object-${mediaFit}`} />
+            <video
+              src={videoSrc}
+              autoPlay={autoPlay}
+              muted={muted}
+              loop={loop}
+              playsInline
+              className={`w-full h-full ${
+                mediaFit === "cover" ? "object-cover" : "object-contain"
+              }`}
+            />
           )}
         </div>
       )}
 
-      {/* GRADIENT OVERLAY */}
-      {gradient && <div className={`absolute inset-0 z-20 ${gradient}`} />}
+      {/* DARK OVERLAY FOR TEXT READABILITY */}
+      <div className="absolute inset-0 bg-black/30 z-10" />
 
-      {/* CHILDREN / CONTENT LAYER */}
-      {/* Removed "absolute inset-0" to allow height to adjust to children content */}
+      {/* GRADIENT OVERLAY (OPTIONAL) */}
+      {gradient && (
+        <div className={`absolute inset-0 z-20 ${gradient}`} />
+      )}
+
+      {/* CHILDREN */}
       {children && (
-        <div className="relative z-10">
+        <div className="relative z-30 p-6">
           {children}
         </div>
       )}
 
       {/* DEFAULT TEXT CONTENT */}
       {(title || description) && (
-        <div className="absolute bottom-6 left-6 z-30 pointer-events-none">
-          {title && <h3 className="text-white font-medium mb-1">{title}</h3>}
-          {description && <p className="text-sm text-neutral-300 max-w-xs">{description}</p>}
+        <div className="absolute bottom-6 left-6 z-30 max-w-xs">
+          {title && (
+            <h3 className="text-white text-lg font-medium mb-1">
+              {title}
+            </h3>
+          )}
+          {description && (
+            <p className="text-sm text-neutral-200">
+              {description}
+            </p>
+          )}
         </div>
       )}
     </div>
