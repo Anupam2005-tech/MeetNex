@@ -44,3 +44,19 @@
   -ms-overflow-style: none;  /* IE + Edge */
   scrollbar-width: none;     /* Firefox */
 }
+
+html.lenis {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth body {
+  overscroll-behavior: none;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
