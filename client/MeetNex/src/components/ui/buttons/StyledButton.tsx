@@ -1,10 +1,12 @@
+import type React from 'react';
 import styled from 'styled-components';
 
 interface StyledButtonProps {
-    text: string;
+  icon?:React.ReactNode
+  text: string;
 }
 
-const StyledButton = ({text}:StyledButtonProps) => {
+const StyledButton = ({text,icon}:StyledButtonProps) => {
   return (
     <StyledWrapper>
       <div className='hover:cursor-pointer'>
@@ -36,7 +38,7 @@ const StyledButton = ({text}:StyledButtonProps) => {
           <div className="backdrop" />
           <div className="StyledButton-border">
             <div className="spin spin-inside" />
-            <div className="StyledButton">{text}</div>
+            <div className="StyledButton">{text}{icon}</div>
           </div>
         </div>
       </div>

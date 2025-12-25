@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X, Github } from "lucide-react";
-import { LinkPreview } from "@/components/ui/Link-preview";
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);

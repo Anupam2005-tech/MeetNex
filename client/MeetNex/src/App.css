@@ -60,3 +60,34 @@ html.lenis {
 .lenis.lenis-stopped {
   overflow: hidden;
 }
+/* 1. Set the width of the scroll area */
+::-webkit-scrollbar {
+  width: 6px; /* Very thin for a modern feel */
+}
+
+/* 2. Hide the track entirely */
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+
+/* 3. The scrolling wheel (thumb) */
+::-webkit-scrollbar-thumb {
+  /* Use a subtle color that works on both light and dark */
+  background: rgba(79, 70, 229, 0.4); /* Indigo-600 with 40% opacity */
+  border-radius: 20px;
+  /* Adding a transparent border acts as padding, making the bar look thinner */
+  border: 2px solid transparent; 
+  background-clip: content-box;
+}
+
+/* 4. Hover effect - makes it slightly more visible when interacting */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(79, 70, 229, 0.8); /* Darker Indigo on hover */
+  background-clip: content-box;
+}
+
+/* Firefox support for minimal scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(79, 70, 229, 0.5) transparent;
+}
