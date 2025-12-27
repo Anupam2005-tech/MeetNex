@@ -8,10 +8,7 @@ const MESSAGES = [
   { id: 2, sender: "lumi", text: "I've scanned the domain. Found 12 active endpoints." },
   { id: 3, sender: "user", text: "Why don't you do it yourself?" },
   { id: 4, sender: "lumi", text: "Because I'm an AI, and you're the boss! 😉" },
-  { id: 5, sender: "user", text: "Fair point. Can you map out the data flow for the main API?" },
-  { id: 6, sender: "lumi", text: "Already on it. Visualizing the pipeline now... looks like a standard REST structure with a Redis layer." },
-  { id: 7, sender: "user", text: "Impressive. How fast can you run a full security audit?" },
-  { id: 8, sender: "lumi", text: "Faster than you can finish that coffee! Ready to start whenever you are. ☕️" },
+
 ];
 
 export function ChatSimulator() {

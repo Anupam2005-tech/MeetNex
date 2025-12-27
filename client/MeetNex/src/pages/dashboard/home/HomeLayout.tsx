@@ -6,6 +6,7 @@ import GlowButton from "@/components/ui/buttons/GlowButton";
 import AnimatedText from "@/components/ui/AnimatedText";
 import { FeatureSection } from "./homePageComponents/FeatureSection";
 import { OriginSection } from "./homePageComponents/OriginSection";
+import TechArchitectLayout from "./homePageComponents/ArchitectureLayout";
 
 /* ------------------- Lazy-loaded components ------------------- */
 const HeroShowcase = lazy(() => import("./homePageComponents/HeroShowcase"));
@@ -198,10 +199,13 @@ export default function HomeLayout() {
       <Suspense fallback={<div className="h-96" />}>
         <InterectiveRevel />
       </Suspense>
-
+       <Suspense fallback={<div className="h-96" />}>
+        <TechArchitectLayout />
+      </Suspense>
       <Suspense fallback={<div className="h-96" />}>
         <FeatureSection />
       </Suspense>
+
 
       <Suspense fallback={<div className="h-96" />}>
         <OriginSection />

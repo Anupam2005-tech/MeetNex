@@ -108,13 +108,13 @@ export default function HeroShowcase() {
           className="grid grid-cols-1 md:grid-cols-12 gap-6"
         >
           <motion.div variants={itemVariants} className="md:col-span-7">
-            <PremiumCard tag="Engine" title="Meet Lumi AI" description="Your in-call co-pilot. Lumi handles summaries in real-time." imageSrc="/heropic.png" />
+            <PremiumCard tag="Engine" title="Meet Lumi AI" description="Your in-call co-pilot. Lumi handles all your query in chat ." imageSrc="/heropic.png" />
           </motion.div>
           <motion.div variants={itemVariants} className="md:col-span-5">
-            <PremiumCard tag="Transport" title="P2P & SFU Hybrid" description="Dynamic switching for guaranteed 0ms latency." imageSrc="/ring.png" />
+            <PremiumCard tag="Transport" title=" Notification" description="Get notification before the meeting" imageSrc="/ring.png" />
           </motion.div>
           <motion.div variants={itemVariants} className="md:col-span-5">
-            <PremiumCard tag="Security" title="Instant Tunneling" description="Drop multi-GB assets via encrypted pipes." imageSrc="/pm.jpg" />
+            <PremiumCard tag="Security" title="Instant Tunneling" description="Drop multi-GB assets via TCP protocol." imageSrc="/pm.jpg" />
           </motion.div>
           <motion.div variants={itemVariants} className="md:col-span-7">
             <PremiumCard tag="Interface" title="Active Workspace" description="Collaborative canvas synced across global nodes." imageSrc="/download.png" />

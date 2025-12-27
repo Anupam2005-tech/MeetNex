@@ -1,258 +1,191 @@
-"use client";
-
-import React from "react";
-import {
-  motion,
-  type Variants,
-  useMotionValue,
-  useSpring,
-  useScroll,
-  useTransform,
-} from "framer-motion";
-import { Github, Linkedin, Twitter, Youtube, Radio } from "lucide-react";
-import StyledButton from "@/components/ui/buttons/StyledButton";
-
-/* ------------------ Animations ------------------ */
-
-const footerVariants: Variants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.8,
-      ease: [0.16, 1, 0.3, 1],
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const childVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
-
-/* ------------------ Component ------------------ */
-
-export default function Footer() {
-  /* Cursor reactive glow */
+import React, { useRef } from "react";
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
+import { Github, Linkedin, Instagram, ArrowUpRight } from "lucide-react";
+import { Link } from "react-router-dom";
+export default function PremiumFooter() {
+  const footerRef = useRef(null);
+  
+  
+  // Cursor Tracking for the "Lava Glow"
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
+  const springConfig = { stiffness: 100, damping: 30 };
+  const smoothX = useSpring(mouseX, springConfig);
+  const smoothY = useSpring(mouseY, springConfig);
 
-  const smoothX = useSpring(mouseX, { stiffness: 80, damping: 20 });
-  const smoothY = useSpring(mouseY, { stiffness: 80, damping: 20 });
+  const { scrollYProgress } = useScroll({
+    target: footerRef,
+    offset: ["start end", "end end"]
+  });
 
-  /* Scroll dissolve */
-  const { scrollYProgress } = useScroll();
-  const dissolve = useTransform(scrollYProgress, [0.6, 1], [1, 0.35]);
+  // Animations based on scroll depth
+  const textY = useTransform(scrollYProgress, [0, 1], [100, 0]);
+  const logoScale = useTransform(scrollYProgress, [0.5, 1], [0.8, 1]);
+  const SOCIAL_LINKS = [
+  { 
+    name: "Github", 
+    Icon: Github, 
+    href: "https://github.com/Anupam2005-tech" 
+  },
+  { 
+    name: "Linkedin", 
+    Icon: Linkedin, 
+    href: "https://www.linkedin.com/in/anupam-bhowmik-436a2027b" 
+  },
+  { 
+    name: "Instagram", 
+    Icon: Instagram, 
+    href: "https://www.instagram.com/anupam01.___" 
+  },
+];
 
   return (
     <footer
+      ref={footerRef}
       onMouseMove={(e) => {
-        mouseX.set(e.clientX);
-        mouseY.set(e.clientY);
+        const rect = e.currentTarget.getBoundingClientRect();
+        mouseX.set(e.clientX - rect.left);
+        mouseY.set(e.clientY - rect.top);
       }}
-      className="relative overflow-hidden pt-24 text-white border-t border-white/[0.02] bg-[#020205]"
+      className="relative w-full overflow-hidden bg-[#020205] text-white pt-32"
     >
-      {/* 🌋 LAVA PIXEL BACKGROUND SYSTEM */}
-      <motion.div
-        style={{ opacity: dissolve }}
-        className="pointer-events-none absolute inset-0 overflow-hidden"
-      >
-        {/* Cursor Lava Core */}
+      {/* 1. CINEMATIC BACKGROUND LAYER */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* The "Lava" Cursor Tracker */}
         <motion.div
-          style={{
-            x: smoothX,
-            y: smoothY,
-            translateX: "-50%",
-            translateY: "-50%",
-          }}
-          className="absolute h-[700px] w-[700px] rounded-full
-          bg-[radial-gradient(circle,rgba(255,90,40,0.35),rgba(99,102,241,0.25),transparent_65%)]
-          blur-[180px]"
+          style={{ x: smoothX, y: smoothY, translateX: "-50%", translateY: "-50%" }}
+          className="absolute h-[600px] w-[600px] bg-indigo-600/20 blur-[120px] rounded-full"
         />
-
-        {/* Breathing Molten Core */}
-        <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.3, 0.15] }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-40 left-1/2 -translate-x-1/2 h-[900px] w-[900px]
-          rounded-full bg-[radial-gradient(circle,rgba(255,80,40,0.25),transparent_70%)]
-          blur-[160px]"
+        
+        {/* Precision Grid (0.5px lines for high-end feel) */}
+        <div className="absolute inset-0 opacity-[0.1] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]"
+             style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`, backgroundSize: '50px 50px' }} 
         />
+      </div>
 
-        {/* Pixel Lava Grid */}
-        <motion.div
-          animate={{ backgroundPosition: ["0% 0%", "120% 120%"] }}
-          transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-0 opacity-[0.07]
-          bg-[linear-gradient(90deg,rgba(255,100,60,0.5)_1px,transparent_1px),
-          linear-gradient(180deg,rgba(255,100,60,0.5)_1px,transparent_1px)]
-          bg-[size:24px_24px]"
-        />
-
-        {/* Floating Pixel Embers */}
-        {[...Array(22)].map((_, i) => (
-          <motion.span
-            key={i}
-            className="absolute h-2.5 w-2.5 rounded-sm bg-orange-400/40"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [-25, 25, -25],
-              opacity: [0.1, 0.8, 0.1],
-            }}
-            transition={{
-              duration: 6 + Math.random() * 6,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
-        ))}
-
-        {/* Film Grain */}
-        <div
-          className="absolute inset-0 opacity-[0.035] mix-blend-overlay"
-          style={{
-            backgroundImage:
-              "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.8\" numOctaves=\"4\"/%3E%3C/filter%3E%3Crect width=\"200\" height=\"200\" filter=\"url(%23n)\"/%3E%3C/svg%3E')",
-          }}
-        />
-
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/60 to-black" />
-      </motion.div>
-
-      {/* ------------------ CONTENT ------------------ */}
-
-      <motion.div
-        variants={footerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-100px" }}
-        className="relative z-10 max-w-7xl mx-auto px-6 sm:px-10 lg:px-20 py-20"
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-24 items-center">
-          {/* Left Node */}
-          <motion.div variants={childVariants} className="relative hidden lg:block">
-            <div className="relative h-[400px] w-[400px] flex items-center justify-center">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 border border-white/[0.03] rounded-full"
-              />
-              <motion.div
-                animate={{ rotate: -360 }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-10 border border-indigo-500/5 rounded-full"
-              />
-
-              <div className="relative h-48 w-48 rounded-[48px] bg-gradient-to-b from-white/[0.08] to-transparent backdrop-blur-3xl border border-white/10 flex flex-col items-center justify-center shadow-[0_0_50px_-12px_rgba(99,102,241,0.3)]">
-                <span className="font-zalando text-5xl font-bold tracking-tighter bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+      {/* 2. MAIN CONTENT AREA */}
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-20 pb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+          
+          {/* Left Column: The "Glass Node" */}
+          <div className="lg:col-span-5 flex items-center justify-center">
+            <motion.div style={{ scale: logoScale }} className="relative group">
+              {/* Spinning Rings (Ultra-thin) */}
+              {[1, 2, 3].map((i) => (
+                <motion.div
+                  key={i}
+                  animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
+                  transition={{ duration: 20 + i * 5, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 border border-white/[0.03] rounded-full"
+                  style={{ margin: `-${i * 20}px` }}
+                />
+              ))}
+              
+              {/* The Glass Shard */}
+              <div className="relative h-64 w-64 bg-gradient-to-br from-white/[0.05] to-transparent backdrop-blur-2xl border border-white/10 rounded-3xl flex flex-col items-center justify-center overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 via-transparent to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                <span className="font-zalando text-7xl font-bold tracking-tighter bg-gradient-to-b from-white to-white/20 bg-clip-text text-transparent">
                   NX
                 </span>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="h-1 w-1 rounded-full bg-indigo-500 animate-pulse" />
-                  <span className="text-[8px] font-doto tracking-widest text-indigo-400 uppercase">
-                    System Live
-                  </span>
+                <div className="mt-4 flex items-center gap-2">
+                  <div className="h-1 w-1 bg-indigo-500 rounded-full animate-ping" />
+                  <span className="text-[9px] font-doto tracking-[0.4em] text-indigo-400 uppercase">Secure Node</span>
                 </div>
               </div>
-            </div>
-          </motion.div>
-
-          {/* Right Text */}
-          <div className="flex flex-col items-start">
-            <motion.div
-              variants={childVariants}
-              className="flex items-center gap-2 mb-6 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20"
-            >
-              <Radio size={12} className="text-indigo-400 animate-pulse" />
-              <span className="text-[10px] font-doto font-bold text-indigo-300 uppercase tracking-widest">
-                Global Protocol Active
-              </span>
             </motion.div>
+          </div>
 
-            <motion.h2
-              variants={childVariants}
-              className="text-5xl sm:text-7xl font-zalando font-bold tracking-tighter leading-[0.9] mb-8"
-            >
-              The future is <br />
-              <span className="text-neutral-600">Syncing.</span>
-            </motion.h2>
+          {/* Right Column: Text & Call to Action */}
+          <div className="lg:col-span-7 flex flex-col justify-center">
+            <motion.div style={{ y: textY }} className="space-y-8">
+              <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full border border-white/5 bg-white/[0.02] backdrop-blur-md">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 shadow-[0_0_10px_#f97316]" />
+                <span className="text-[10px] font-doto tracking-widest text-neutral-400 uppercase">v4.0 Protocol</span>
+              </div>
 
-            <motion.p
-              variants={childVariants}
-              className="max-w-md text-neutral-400 text-lg font-light leading-relaxed mb-10 font-outfit"
-            >
-              MeetNeX infrastructure powers the next generation of 0ms latency
-              AI-driven workflows.
-            </motion.p>
+              <h2 className="text-6xl md:text-8xl font-zalando font-bold tracking-tighter leading-[0.85]">
+                Infinite <br />
+                <span className="text-slate-400 ">Evolution.</span>
+              </h2>
 
-            <motion.div variants={childVariants}>
-              <StyledButton text="See in Action" />
+              <p className="max-w-md text-neutral-400 text-lg font-light font-outfit leading-relaxed">
+                Architecting the backbone of neural-latency workflows. 
+                Deploying edge-sync globally in <span className="text-white font-medium">0.4ms</span>.
+              </p>
+
+              <div className="flex flex-wrap gap-4 pt-4">
+               <Link to={'/home'}>
+                <button className="px-8 py-4 bg-white text-black font-bold rounded-full flex items-center gap-2 hover:bg-indigo-500 hover:cursor-pointer hover:text-white transition-all duration-500 group">
+                  Initialize Sync <ArrowUpRight size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+                </button></Link>
+              </div>
             </motion.div>
           </div>
         </div>
-      </motion.div>
+      </div>
 
-      {/* ------------------ BOTTOM BAR ------------------ */}
+      {/* 3. THE "SPEC" STRIP (The Detailed Data Bar) */}
+      <div className="relative border-y border-white/[0.05] bg-white/[0.01]">
+        <div className="max-w-7xl mx-auto px-6 lg:px-20 py-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+           {[
+{ label: "Bitrate Ceiling", val: "12-bit RAW", progress: 95 },
+  { label: "Packet Integrity", val: "< 0.001% Loss", progress: 99 },
+  { label: "SFU Clusters", val: "840 Active", progress: 88 },
+  { label: "Signal Protocol", val: "Binary/Sym", progress: 100 }
+           ].map((stat, i) => (
+             <div key={i} className="flex flex-col gap-1">
+               <span className="text-[8px] font-doto text-neutral-600 uppercase tracking-widest">{stat.label}</span>
+               <span className="text-xs font-medium text-neutral-300">{stat.val}</span>
+             </div>
+           ))}
+        </div>
+      </div>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 1 }}
-        className="relative z-10 border-t border-white/[0.05] bg-[#020205]/80 backdrop-blur-xl"
-      >
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-20 py-10 flex flex-col md:flex-row items-center justify-between gap-10">
-          <div className="flex flex-col items-center md:items-start gap-4">
-            <p className="text-[10px] font-doto text-neutral-500 tracking-widest uppercase">
-              © {new Date().getFullYear()} MeetNeX — Node 0172_LA
+      {/* 4. FOOTER BASE */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-20 py-12 flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="flex flex-col gap-2">
+            <p className="text-[10px] font-doto text-neutral-500 tracking-[0.2em] uppercase">
+              © 2025 MeetNeX — Distributed Systems
             </p>
-            <div className="flex items-center gap-2 text-[9px] text-neutral-600 tracking-[0.25em] uppercase font-medium">
-              <span>Crafted with</span>
-              <motion.img
-                src="/heart.svg"
-                alt="heart"
-                className="w-3.5 h-3.5 brightness-75"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-              />
-              <span>By</span>
-              <span className="text-neutral-300 underline underline-offset-4 decoration-indigo-500/40">
-                Anupam
-              </span>
-            </div>
-          </div>
-
-          <nav className="flex gap-10 text-[10px] font-bold tracking-[0.3em] uppercase text-neutral-500 font-doto">
-            {["Changelog", "Status", "Docs"].map((item) => (
-              <a
-                key={item}
-                href="#"
-                className="hover:text-indigo-400 transition-all duration-300"
-              >
-                {item}
-              </a>
-            ))}
-          </nav>
-
-          <div className="flex gap-3">
-            {[Github, Linkedin, Twitter, Youtube].map((Icon, idx) => (
-              <motion.a
-                key={idx}
-                href="#"
-                whileHover={{ y: -3, backgroundColor: "rgba(99,102,241,0.1)" }}
-                className="h-10 w-10 flex items-center justify-center rounded-xl border border-white/5 text-neutral-500 hover:text-white transition-all"
-              >
-                <Icon size={18} strokeWidth={1.5} />
-              </motion.a>
-            ))}
-          </div>
+            <div className="flex items-center gap-2 text-[9px] text-neutral-500 uppercase font-medium tracking-widest">
+  <span>Designed with love and passion</span>
+  
+  <span className="flex items-center gap-1.5 text-neutral-200 underline underline-offset-4 decoration-indigo-500/40 cursor-pointer hover:text-indigo-400 transition-colors group">
+    by Anupam
+    <motion.img 
+      src="/heart.svg" 
+      alt="heart" 
+      className="w-10 h-10 transition-transform group-hover:scale-110" 
+      animate={{ scale: [1, 1.2, 1] }}
+      transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+    />
+  </span>
+</div>
         </div>
-      </motion.div>
+
+        <nav className="flex gap-8 text-[10px] font-bold tracking-[0.2em] uppercase text-neutral-200 font-doto">
+          {["Network", "Encryption","AI Assistance"].map((item) => (
+            <p className="hover:text-white transition-colors">{item}</p>
+          ))}
+        </nav>
+
+      <div className="flex gap-4">
+  {SOCIAL_LINKS.map((social, i) => (
+    <motion.a
+      key={i}
+      href={social.href}
+      target="_blank" // Opens in a new tab
+      rel="noopener noreferrer" // Security best practice
+      whileHover={{ y: -4, scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      className="p-3 rounded-full border border-white/5 bg-white/[0.02] hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-colors text-neutral-500 hover:text-white"
+      aria-label={social.name}
+    >
+      <social.Icon size={16} strokeWidth={1.5} />
+    </motion.a>
+  ))}
+</div>
+      </div>
     </footer>
   );
 }

@@ -1,4 +1,3 @@
-"use client";
 import { motion } from "framer-motion";
 import { PhoneMockup } from "@/components/ui/PhoneMockUp";
 import BounceCards from "@/components/ui/BounceCards";
@@ -41,14 +40,14 @@ export function FeatureSection() {
             {...scrollReveal}
             className="text-4xl md:text-6xl font-bold tracking-tight text-slate-950 mb-4 relative z-10"
           >
-            MeetNex <span className="text-slate-400 font-medium tracking-tighter not-italic">Collaborative Power</span>
+            MeetNex <span className="text-slate-400 font-medium tracking-tighter not-italic"> Power</span>
           </motion.h1>
           <motion.p 
             {...scrollReveal}
             transition={{ delay: 0.2, duration: 0.8 }}
             className="text-slate-500 max-w-xl mx-auto text-base font-light relative z-10 leading-relaxed"
           >
-            More than just a video call. A workspace that breathes with your team, 
+            More than just a video call. A place that breathes with your team, 
             built for high-intensity file sharing and real-time AI assistance.
           </motion.p>
         </div>
@@ -137,10 +136,10 @@ export function FeatureSection() {
               {...scrollReveal}
               className="space-y-3 mb-12 flex-none"
             >
-              <h3 className="text-2xl font-bold text-slate-900 tracking-tight ">Neural Assistant.</h3>
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight ">Lumi AI Assistant.</h3>
               <p className="text-slate-500 text-sm max-w-xs font-light leading-relaxed">
-                MeetNex AI integrates directly into your workflow to summarize meetings, 
-                track tasks, and answer complex queries instantly.
+                MeetNex AI integrates directly into your workflow to ease meetings, 
+                 and answer complex queries instantly.
               </p>
             </motion.div>
 
