@@ -8,6 +8,7 @@ import Loader from "@/components/ui/Loader";
 import HomeLayout from "@/pages/dashboard/home/HomeLayout";
 import RoomPage from "@/pages/meeting/RoomPage";
 import { ProtectedRoute } from "./ProtectedRoutes";
+import LumiChat from "@/components/ui/LumiChat";
 
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage"));
@@ -93,7 +94,12 @@ function Approuter() {
               </ProtectedRoute>
             }
           />
-
+          <Route path="/lumi/chat" element={
+            <ProtectedRoute>
+              <LumiChat/>
+            </ProtectedRoute>
+          }/>
+          
         </Routes>
       </Suspense>
     </Router>

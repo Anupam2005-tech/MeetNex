@@ -1,4 +1,3 @@
-"use client";
 import React, { useEffect, useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "./Sidebar";
 import {
@@ -12,17 +11,15 @@ import {
 import MainLayoutText from "./MainLayoutText";
 import { Link, useNavigate } from "react-router-dom";
 import { UserButton } from "@clerk/clerk-react";
-import { Modal } from "../ui/Modal"; // Ensure path is correct
+import { Modal } from "../ui/Modal"; 
 import RoomID from "@/pages/meeting/RoomID";
 
-/* ================= MAIN LAYOUT ================= */
 export function MainLayout() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [meetingDropdownOpen, setMeetingDropdownOpen] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
 
-  // --- STATE FOR SELECTION & MODAL ---
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
 
@@ -45,34 +42,45 @@ export function MainLayout() {
     },
     {
       label: "Lumi",
-      to: "/chat",
+      to: "/lumi/chat",
       icon: <IconMessage2Bolt className="h-5 w-5" />,
     },
   ];
 
-  // --- UPDATED HANDLER ---
   const handleSubLinkClick = (sub: { label: string; to: string }) => {
     if (sub.label === "Start Instant Meeting") {
-      setPendingRoute(sub.to);
+      // We set a flag that we want to start an instant meeting
+      setPendingRoute("instant");
     } else if (sub.label === "Schedule Meeting") {
-      // Instead of navigating, we open the Modal with RoomID
       setIsScheduleModalOpen(true);
     } else {
       navigate(sub.to);
     }
   };
 
-  const selectModeAndNavigate = (mode: "p2p" | "sfu") => {
-    if (pendingRoute) {
-      navigate(`${pendingRoute}?type=${mode}`);
+  // NEW: Backend-driven Room Generation
+  const createMeetingAndNavigate = async (mode: "p2p" | "sfu") => {
+    try {
+      /** * TODO: Replace this with your actual backend call:
+       * const response = await fetch("/api/rooms/create", { method: "POST" });
+       * const { roomId } = await response.json();
+       */
+      
+      // Simulating backend response:
+      const backendRoomId = Math.random().toString(36).substring(2, 10).toUpperCase(); 
+
+      // Navigate to the dynamic room path with the type query
+      navigate(`/room/${backendRoomId}?type=${mode}`);
+      
       setPendingRoute(null);
+    } catch (error) {
+      console.error("Backend Error:", error);
     }
   };
 
   return (
     <div className="flex h-screen w-full bg-white overflow-hidden relative">
       
-      {/* ================= SCHEDULE MODAL ================= */}
       <Modal 
         isOpen={isScheduleModalOpen} 
         onClose={() => setIsScheduleModalOpen(false)}
@@ -81,18 +89,17 @@ export function MainLayout() {
       >
         <div className="flex flex-col items-center justify-center py-2">
           <RoomID />
-       
         </div>
       </Modal>
 
-      {/* ================= SELECTION OVERLAY (For Instant) ================= */}
-      {pendingRoute && (
+      {/* SELECTION OVERLAY */}
+      {pendingRoute === "instant" && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-md">
           <div className="flex flex-col items-center animate-in fade-in zoom-in duration-300">
             <h2 className="text-2xl font-bold text-gray-800 mb-8">Select Meeting Style</h2>
             <div className="flex gap-6">
               <button
-                onClick={() => selectModeAndNavigate("p2p")}
+                onClick={() => createMeetingAndNavigate("p2p")}
                 className="flex flex-col items-center gap-4 p-8 border-2 border-gray-100 rounded-3xl hover:border-blue-600 hover:bg-blue-50 transition-all group"
               >
                 <IconUser size={48} className="text-gray-400 group-hover:text-blue-600" />
@@ -103,7 +110,7 @@ export function MainLayout() {
               </button>
 
               <button
-                onClick={() => selectModeAndNavigate("sfu")}
+                onClick={() => createMeetingAndNavigate("sfu")}
                 className="flex flex-col items-center gap-4 p-8 border-2 border-gray-100 rounded-3xl hover:border-blue-600 hover:bg-blue-50 transition-all group"
               >
                 <IconUsers size={48} className="text-gray-400 group-hover:text-blue-600" />
@@ -123,7 +130,6 @@ export function MainLayout() {
         </div>
       )}
 
-      {/* ================= SIDEBAR ================= */}
       <Sidebar open={open} setOpen={setOpen} animate={false}>
         <SidebarBody className="justify-between gap-6">
           <div className="flex flex-1 flex-col overflow-y-auto px-2 py-4">
@@ -174,16 +180,7 @@ export function MainLayout() {
           </div>
 
           <div className="px-2 pb-4">
-            <UserButton
-              showName
-              appearance={{
-                elements: {
-                  userButtonBox: "flex items-center gap-2",
-                  userButtonAvatarBox: "order-1 h-8 w-8",
-                  userButtonOuterIdentifier: "order-2 text-sm text-gray-700 font-medium",
-                },
-              }}
-            />
+            <UserButton showName appearance={{ elements: { userButtonBox: "flex items-center gap-2" } }} />
           </div>
         </SidebarBody>
       </Sidebar>
@@ -200,21 +197,20 @@ export function MainLayout() {
   );
 }
 
-// ... Logo and CurrentDateTime stay the same
 export const Logo = () => (
-    <Link to="/" className="flex items-center gap-2 py-1">
-      <div className="h-6 w-6 rounded bg-gray-800" />
-      <span className="text-sm font-medium">MeetNeX</span>
-    </Link>
-  );
-  
-  export const CurrentDateTime = () => {
-    const [now, setNow] = useState(new Date());
-    useEffect(() => {
-      const id = setInterval(() => setNow(new Date()), 1000);
-      return () => clearInterval(id);
-    }, []);
-    const time = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    const date = now.toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" });
-    return <>{time}{","}{date}</>;
-  };
+  <Link to="/" className="flex items-center gap-2 py-1">
+    <div className="h-6 w-6 rounded bg-gray-800" />
+    <span className="text-sm font-medium">MeetNeX</span>
+  </Link>
+);
+
+export const CurrentDateTime = () => {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const time = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+  const date = now.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
+  return <>{time}, {date}</>;
+};
