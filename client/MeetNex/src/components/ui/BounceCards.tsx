@@ -23,7 +23,6 @@ export default function BounceCards({
   images = [],
   containerWidth = 400,
   containerHeight = 400,
-  animationDelay = 0, // Delay is now handled by ScrollTrigger start point
   animationStagger = 0.06,
   easeType = 'elastic.out(1, 0.8)',
   transformStyles = [
