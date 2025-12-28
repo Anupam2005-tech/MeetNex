@@ -1,5 +1,5 @@
 import { cn } from "../../lib/Utils";
-import React, { useState, createContext, useContext } from "react";
+import { useState, createContext, useContext } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { IconMenu2, IconX } from "@tabler/icons-react";
 import { Link } from "react-router-dom";

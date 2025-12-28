@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import BentoCodeSystem from "@/components/ui/Bento-Code";
-import { ChevronRight, Cpu, Globe, Zap, ShieldCheck } from "lucide-react";
+import {  Cpu, Globe, Zap, ShieldCheck } from "lucide-react";
 
 export default function TechArchitectLayout() {
   const containerRef = useRef<HTMLDivElement>(null);

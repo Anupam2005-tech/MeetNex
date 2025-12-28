@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState, lazy } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "./Sidebar";
 import {
   IconVideo,
@@ -179,9 +179,18 @@ export function MainLayout() {
             </div>
           </div>
 
-          <div className="px-2 pb-4">
-            <UserButton showName appearance={{ elements: { userButtonBox: "flex items-center gap-2" } }} />
-          </div>
+       <div className="px-2 pb-4">
+  <UserButton 
+    showName 
+    appearance={{ 
+      elements: { 
+        userButtonBox: "flex flex-row items-center gap-3",
+        userButtonAvatarBox: "order-first", 
+        userButtonOuterIdentifier: "order-last text-sm font-semibold text-gray-700"
+      } 
+    }} 
+  />
+</div>
         </SidebarBody>
       </Sidebar>
 

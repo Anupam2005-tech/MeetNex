@@ -1,4 +1,4 @@
-import  { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { MicOff, Mic } from "lucide-react";
 import { useUser } from "@clerk/clerk-react";
 

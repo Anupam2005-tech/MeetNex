@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { X, Sparkles, Users } from "lucide-react";
 import ParticipantsChat from "./roomChat/ParticipantsChat"; // We will create this
 import AIChat from "./AI/AIChat"; // We will create this

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, MicOff, Maximize2, Minimize2 } from 'lucide-react';
+import { User, Maximize2, Minimize2 } from 'lucide-react';
 
 interface Participant {
   id: string;
@@ -61,12 +61,6 @@ const SFUMeetingPage = ({ screenStream }: { screenStream?: MediaStream | null })
     else if (distance < -50 && currentPage > 0) setCurrentPage(curr => curr - 1);
   };
 
-  /**
-   * FIX: Data Filtering Logic
-   * If maximized, we only show the one person.
-   * If sharing, we show all people in a sidebar list.
-   * Otherwise, we show the paginated slice.
-   */
   const currentParticipants = maximizedId 
     ? participants.filter(p => p.id === maximizedId)
     : isSharing 

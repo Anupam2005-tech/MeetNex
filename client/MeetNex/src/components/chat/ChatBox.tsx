@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { MessageBubble } from "./MessageBubble"; // Use named import
 
 interface Message {
@@ -6,7 +6,8 @@ interface Message {
   text: string;
   sender: "me" | "other";
   time?: string;
-  fileName?: string; // Add this
+  fileName?: string; 
+  fileUrl?:string
 }
 
 interface ChatBoxProps {
@@ -28,7 +29,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({ messages }) => {
           <MessageBubble
          key={msg.id}
     text={msg.text}
-    fileName={msg.fileName} // Pass the filename to the bubble
+    fileName={msg.fileName}
+    fileUrl={msg.fileUrl}
     sender={msg.sender}
     time={msg.time}
           />

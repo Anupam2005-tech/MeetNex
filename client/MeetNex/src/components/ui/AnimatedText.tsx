@@ -1,6 +1,6 @@
 "use client";
 
-import React, { memo, useRef } from "react";
+import { memo, useRef } from "react";
 import {
   LazyMotion,
   domAnimation,

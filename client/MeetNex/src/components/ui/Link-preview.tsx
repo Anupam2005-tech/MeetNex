@@ -1,7 +1,6 @@
 "use client";
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
 import { encode } from "qss";
-import React from "react";
 import {
   AnimatePresence,
   motion,

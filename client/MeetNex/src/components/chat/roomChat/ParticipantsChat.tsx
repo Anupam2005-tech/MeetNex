@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ChatBox from "../ChatBox"
 import ChatInput from "../ChatInput";
 
@@ -11,8 +11,8 @@ type Message = {
   text: string;
   sender: "me" | "other";
   time: string;
-  fileName?: string; // Added fileName property
-  fileUrl?: string;  // Added fileUrl property
+  fileName?: string; 
+  fileUrl?: string;
 };
 
 const ParticipantsChat: React.FC = () => {
@@ -29,6 +29,7 @@ const handleSend = (text: string, attachments: Attachment[]) => {
     // New Logic for Files
     fileName: hasFile ? attachments[0].file.name : undefined,
     fileUrl: hasFile ? URL.createObjectURL(attachments[0].file) : undefined,
+    
   };
 
   setMessages(prev => [...prev, newMessage]);

@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { motion, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
 import { Github, Linkedin, Instagram, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";

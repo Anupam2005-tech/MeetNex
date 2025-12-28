@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import LoginForm from "@/components/forms/LoginForm";
 import { useAuth } from "@clerk/clerk-react";
 import { useLocation, useNavigate } from "react-router-dom";

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "../../components/ui/buttons/Button";
 import { FaVideo } from "react-icons/fa";
 import Dropdown from "../../components/ui/Dropdown";

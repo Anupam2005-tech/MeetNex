@@ -23,10 +23,10 @@ const scrollReveal = {
   initial: { opacity: 0, y: 20 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, amount: 0.3 },
-  transition: { duration: 0.8, ease: "easeOut" }
+  transition: { duration: 0.8, ease: "easeOut" as const  }
 };
 
-export function FeatureSection() {
+export default function FeatureSection() {
   return (
     <section className="relative min-h-screen w-full bg-white flex flex-col items-center py-24 px-4 overflow-hidden">
       
