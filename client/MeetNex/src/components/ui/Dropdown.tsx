@@ -1,127 +1,108 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Volume2, Video, ChevronDown } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { ChevronDown, Check } from 'lucide-react';
+import { cn } from "../../lib/Utils"; // Ensure this utility exists
 
-interface DropdownOption {
+interface Option {
   id: string;
   label: string;
-  type?: string;
+  description?: string;
 }
 
-interface MediaDropdownProps {
-  icon: React.ReactNode;
-  label: string;
-  options: DropdownOption[];
-  defaultValue?: string;
+interface DropdownProps {
+  options: Option[];
+  value: string;
+  onChange: (id: string) => void;
+  placeholder?: string;
+  className?: string;
+  icon?: React.ReactNode;
 }
 
-const MediaDropdown: React.FC<MediaDropdownProps> = ({ 
-  icon, 
-  label, 
+const Dropdown: React.FC<DropdownProps> = ({ 
   options, 
-  defaultValue 
+  value, 
+  onChange, 
+  placeholder = "Select option",
+  className,
+  icon
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState(defaultValue || options[0]?.id);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     };
-
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const selectedOption = options.find(opt => opt.id === selected);
+  const selectedOption = options.find(opt => opt.id === value);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className={cn("relative w-full", className)} ref={dropdownRef}>
+      {/* TRIGGER */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors shadow-sm min-w-[160px]"
+        className={cn(
+          "w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200",
+          "bg-white border border-zinc-200 shadow-sm hover:border-zinc-300",
+          isOpen && "border-zinc-900 ring-4 ring-zinc-900/5"
+        )}
       >
-        <span className="text-gray-600">{icon}</span>
-        <span className="text-sm text-gray-700 flex-1 text-left truncate">
-          {selectedOption?.label || label}
+        {icon && <span className="text-zinc-400 group-hover:text-zinc-600">{icon}</span>}
+        
+        <span className={cn(
+          "flex-1 text-left text-sm font-semibold truncate",
+          !selectedOption ? "text-zinc-400" : "text-zinc-900"
+        )}>
+          {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+
+        <ChevronDown className={cn(
+          "w-4 h-4 text-zinc-400 transition-transform duration-300",
+          isOpen && "rotate-180 text-zinc-900"
+        )} />
       </button>
 
+      {/* MENU */}
       {isOpen && (
-        // Responsive Dropdown positioning: drop up on small screens if near the bottom, drop down otherwise
-        <div className="absolute bottom-full mb-2 lg:top-full lg:mt-2 w-full min-w-[280px] bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-          {options.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => {
-                setSelected(option.id);
-                setIsOpen(false);
-              }}
-              className={`w-full px-4 py-2.5 text-left text-sm hover:bg-gray-100 transition-colors ${
-                selected === option.id ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
-              }`}
-            >
-              <div className="flex flex-col">
-                <span className="font-medium">{option.label}</span>
-                {option.type && (
-                  <span className="text-xs text-gray-500 mt-0.5">{option.type}</span>
+        <div className="absolute bottom-full mb-2 lg:top-full lg:mt-2 w-full min-w-[220px]  bg-white rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.12)] border border-zinc-100 p-1.5 z-[999] animate-in fade-in zoom-in-95">
+          <div className="max-h-[280px] overflow-y-auto custom-scrollbar">
+            {options.map((option) => (
+              <button
+                key={option.id}
+                onClick={() => {
+                  onChange(option.id);
+                  setIsOpen(false);
+                }}
+                className={cn(
+                  "w-full px-3 py-2.5 rounded-xl text-left transition-all flex items-center justify-between group",
+                  value === option.id 
+                    ? "bg-zinc-900 text-white shadow-lg shadow-zinc-900/20" 
+                    : "text-zinc-600 hover:bg-zinc-50"
                 )}
-              </div>
-            </button>
-          ))}
+              >
+                <div className="flex flex-col truncate">
+                  <span className="text-sm font-semibold truncate">{option.label}</span>
+                  {option.description && (
+                    <span className={cn(
+                      "text-[10px] mt-0.5",
+                      value === option.id ? "text-zinc-400" : "text-zinc-400"
+                    )}>
+                      {option.description}
+                    </span>
+                  )}
+                </div>
+                {value === option.id && <Check size={14} className="text-emerald-400 shrink-0 ml-2" />}
+              </button>
+            ))}
+          </div>
         </div>
       )}
-    </div>
-  );
-};
-
-const Dropdown: React.FC = () => {
-  const micOptions: DropdownOption[] = [
-    { id: 'default-mic', label: 'Default - Built-in Microphone', type: 'Default' },
-    { id: 'external-mic', label: 'External USB Microphone', type: 'USB Audio Device' },
-    { id: 'headset-mic', label: 'Headset Microphone', type: 'Bluetooth' },
-  ];
-
-  const speakerOptions: DropdownOption[] = [
-    { id: 'default-speaker', label: 'Default - Built-in Speakers', type: 'Default' },
-    { id: 'headphones', label: 'Headphones', type: 'Bluetooth' },
-    { id: 'external-speaker', label: 'External Speakers', type: 'USB Audio Device' },
-  ];
-
-  const cameraOptions: DropdownOption[] = [
-    { id: 'default-camera', label: 'Hy-UXGA(AF) (05c8:0815)', type: 'USB Camera' },
-    { id: 'external-camera', label: 'External Webcam', type: 'USB Camera' },
-    { id: 'virtual-camera', label: 'OBS Virtual Camera', type: 'Virtual Device' },
-  ];
-
-  return (
-    <div className="w-full">
-        {/* Responsive flex container: Wraps on small screens, centers content, and aligns left on medium+ screens */}
-        <div className="flex flex-wrap justify-center md:justify-start gap-3 sm:gap-4 p-2 ">
-            <MediaDropdown
-                icon={<Mic className="w-5 h-5" />}
-                label="Default"
-                options={micOptions}
-                defaultValue="default-mic"
-            />
-            
-            <MediaDropdown
-                icon={<Volume2 className="w-5 h-5" />}
-                label="Default"
-                options={speakerOptions}
-                defaultValue="default-speaker"
-            />
-            
-            <MediaDropdown
-                icon={<Video className="w-5 h-5" />}
-                label="Hy-UXGA(AF)..."
-                options={cameraOptions}
-                defaultValue="default-camera"
-            />
-        </div>
     </div>
   );
 };

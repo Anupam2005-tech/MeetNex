@@ -1,17 +1,20 @@
-import React, { useRef, Suspense, lazy } from "react";
+import { useRef, Suspense, lazy } from "react";
 import { MoveRight } from "lucide-react";
 import Navbar from "./homePageComponents/Navbar";
 import LaserFlow from "./homePageComponents/LaserFlow";
 import GlowButton from "@/components/ui/buttons/GlowButton";
 import AnimatedText from "@/components/ui/AnimatedText";
-import { FeatureSection } from "./homePageComponents/FeatureSection";
-import { OriginSection } from "./homePageComponents/OriginSection";
-import TechArchitectLayout from "./homePageComponents/ArchitectureLayout";
-
+import { Link } from "react-router-dom";
 /* ------------------- Lazy-loaded components ------------------- */
+
+
+// Lazy loading the components
+const FeatureSection = lazy(() => import("./homePageComponents/FeatureSection"));
+const TechArchitectLayout = lazy(() => import("./homePageComponents/ArchitectureLayout"));
 const HeroShowcase = lazy(() => import("./homePageComponents/HeroShowcase"));
 const InterectiveRevel = lazy(() => import("./homePageComponents/InterectiveRevel"));
 const Footer = lazy(() => import("./homePageComponents/Footer"));
+const OriginSection = lazy(() => import("./homePageComponents/OriginSection"));
 
 export default function HomeLayout() {
   const revealImgRef = useRef<HTMLImageElement>(null);
@@ -102,7 +105,7 @@ export default function HomeLayout() {
             />
           </p>
 
-          <GlowButton text="See in Action" icon={<MoveRight size={16} />} />
+          <Link to={'/home'}><GlowButton text="See in Action" icon={<MoveRight size={16} />} /></Link>
         </div>
 
         {/* ================= HERO IMAGE ================= */}
@@ -199,13 +202,14 @@ export default function HomeLayout() {
       <Suspense fallback={<div className="h-96" />}>
         <InterectiveRevel />
       </Suspense>
+
        <Suspense fallback={<div className="h-96" />}>
         <TechArchitectLayout />
       </Suspense>
+
       <Suspense fallback={<div className="h-96" />}>
         <FeatureSection />
       </Suspense>
-
 
       <Suspense fallback={<div className="h-96" />}>
         <OriginSection />

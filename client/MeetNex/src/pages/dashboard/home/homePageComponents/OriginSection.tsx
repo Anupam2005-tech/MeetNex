@@ -1,10 +1,12 @@
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { useRef } from "react";
 import Globe from "@/components/ui/Globe";
+import LinkPreview from "@/components/ui/Link-preview";
+import PointerHighlight from "@/components/ui/PointerHighlight";
 
-export function OriginSection() {
+export default function OriginSection() {
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start end", "end start"],
@@ -26,27 +28,27 @@ export function OriginSection() {
       {/* 1. ULTRA-PREMIUM BACKGROUND LAYER */}
       <div className="absolute inset-0 -z-10">
         {/* Dynamic Mesh with Noise */}
-        <motion.div 
-          style={{ 
+        <motion.div
+          style={{
             opacity: useTransform(scrollYProgress, [0, 0.5], [0.4, 0.7]),
-            scale: useTransform(scrollYProgress, [0, 1], [1, 1.2]) 
+            scale: useTransform(scrollYProgress, [0, 1], [1, 1.2])
           }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140vw] h-[140vh] bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.12)_0%,rgba(168,85,247,0.05)_30%,transparent_70%)]" 
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140vw] h-[140vh] bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.12)_0%,rgba(168,85,247,0.05)_30%,transparent_70%)]"
         />
-        
+
         {/* Subtle Grid with Radial Mask */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:45px_45px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_90%)]" />
       </div>
 
       <div className="relative z-10 w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-0 items-center">
-        
+
         {/* LEFT — CONTENT SECTION */}
-        <motion.div 
-          style={{ opacity: textOpacity, y: smoothY }} 
+        <motion.div
+          style={{ opacity: textOpacity, y: smoothY }}
           className="flex flex-col space-y-10 lg:pr-20 relative"
         >
           {/* Micro-Badge */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             className="group flex items-center space-x-3 w-fit px-4 py-2 rounded-full border border-white/10 bg-gradient-to-b from-white/5 to-transparent backdrop-blur-md shadow-[0_2px_20px_-5px_rgba(0,0,0,0.5)]"
@@ -82,18 +84,33 @@ export function OriginSection() {
             className="text-lg md:text-xl text-neutral-400 leading-relaxed max-w-md font-light"
           >
             Originating from the serene hills of{" "}
-            <span className="text-white font-bold">Tripura</span>, 
+          <PointerHighlight
+   rectangleClassName="bg-neutral-200 dark:bg-neutral-700 border-neutral-300 dark:border-neutral-600"
+            pointerClassName="text-yellow-500 h-3 w-3"
+            containerClassName="inline-block mr-1"
+>
+  <span className="relative z-10 font-bold">
+    <LinkPreview 
+      url="https://maps.app.goo.gl/EXgULLUp37zkEyJd6" 
+      isStatic={true} 
+      imageSrc="/matarbari.jpg"
+      className="text-white"
+    >
+      Tripura
+    </LinkPreview>
+  </span>
+</PointerHighlight>,
             we engineer digital ecosystems that resonate with a{" "}
             <span className="text-indigo-300">global perspective.</span>
           </motion.p>
 
           {/* SaaS Styled CTA Divider */}
           <div className="flex items-center space-x-6">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
               whileInView={{ width: "120px" }}
               transition={{ delay: 0.6, duration: 1.2 }}
-              className="h-[1px] bg-gradient-to-r from-indigo-500 via-purple-500 to-transparent" 
+              className="h-[1px] bg-gradient-to-r from-indigo-500 via-purple-500 to-transparent"
             />
             <span className="text-[10px] uppercase tracking-[0.4em] text-neutral-600">Explore Origin</span>
           </div>
@@ -104,7 +121,7 @@ export function OriginSection() {
 
         {/* RIGHT — VISUAL SECTION */}
         <motion.div
-          style={{ 
+          style={{
             scale: globeScale,
             rotate: useTransform(scrollYProgress, [0, 1], [0, 25]),
           }}
@@ -115,7 +132,7 @@ export function OriginSection() {
 
           {/* Outer Orbital Rings (Premium Detail) */}
           {[1.4, 1.2, 1.05].map((scale, i) => (
-            <motion.div 
+            <motion.div
               key={i}
               animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
               transition={{ duration: 30 + i * 10, repeat: Infinity, ease: "linear" }}
@@ -125,12 +142,12 @@ export function OriginSection() {
           ))}
 
           {/* Floating Globe Container */}
-          <motion.div 
+          <motion.div
             animate={{ y: [0, -15, 0] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             className="relative w-full h-full scale-90 md:scale-100 z-20 pointer-events-auto filter drop-shadow-[0_0_50px_rgba(99,102,241,0.2)]"
           >
-             <Globe />
+            <LinkPreview url="https://maps.app.goo.gl/EXgULLUp37zkEyJd6" isStatic={true} imageSrc="/matarbari.jpg" ><Globe /></LinkPreview>
           </motion.div>
         </motion.div>
       </div>

@@ -56,7 +56,7 @@ export function stopCamera(stream?: MediaStream): boolean {
   if (!tracks.length) return false;
 
   tracks.forEach(track => {
-    track.stop();              // 🔥 releases hardware
+    track.stop();              
     stream.removeTrack(track); // remove from stream
   });
 

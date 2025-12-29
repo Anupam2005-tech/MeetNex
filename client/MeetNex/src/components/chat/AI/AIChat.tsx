@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import ChatBox from "../ChatBox";
 import ChatInput from "../ChatInput";
 import { Sparkles, Info } from "lucide-react";
@@ -54,7 +54,7 @@ const AIChat: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full ">
       {/* CHAT AREA */}
       <div className="flex-1 overflow-y-auto no-scrollbar px-4 py-6 space-y-4 scroll-smooth">
         {messages.length === 0 && (
@@ -96,7 +96,11 @@ const AIChat: React.FC = () => {
       {/* INPUT AREA */}
       <div className="p-4 bg-indigo-50/30 border-t border-indigo-100 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto space-y-2">
-          <ChatInput onSend={handleSend} placeholder="Ask Lumi anything..." />
+         <ChatInput 
+            onSend={handleSend} 
+            placeholder="Ask Lumi anything..." 
+            hideAttachments={true} 
+          />
           
           {/* DISCLAIMER 2: AI Accuracy (Sticky Footer) */}
           <p className="text-[10px] text-center text-indigo-400 font-bold ">

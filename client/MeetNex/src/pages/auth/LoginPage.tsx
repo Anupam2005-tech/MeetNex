@@ -1,76 +1,121 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import LoginForm from "@/components/forms/LoginForm";
 import { useAuth } from "@clerk/clerk-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import Logo from "@/components/ui/Logo";
+import {Zap, Shield } from "lucide-react";
 
 function LoginPage() {
   const { isSignedIn, isLoaded } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // 👇 Preserve intended route
-  const from = location.state?.from?.pathname || "/home";
 
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      navigate(from, { replace: true });
-    }
-  }, [isLoaded, isSignedIn, from, navigate]);
+    if (isLoaded && isSignedIn) navigate("/home");
+  }, [isLoaded, isSignedIn, navigate]);
 
-  // ⏳ Wait for Clerk before rendering
-  if (!isLoaded) {
-    return null; // or loader if you want
-  }
+  if (!isLoaded) return null;
 
   return (
-    <div className="relative min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 overflow-hidden">
+    <div className="min-h-screen w-full bg-[#f0f0f2] p-4 lg:p-8 flex items-center justify-center font-outfit">
+      {/* MAIN CONTAINER */}
+      <div className="w-full max-w-[1440px] h-full lg:h-[85vh] bg-white rounded-[40px] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col lg:flex-row border border-white relative">
+        
+        {/* ================= LEFT: THE FEATURE BLADE (38%) ================= */}
+        <div className="lg:w-[38%] bg-[#0a0a0b] p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden z-10">
+          
+          {/* Top-Right Glow to soften the "Black" side */}
+          <div className="absolute top-[-10%] right-[-10%] w-80 h-80 bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-      {/* ================= LEFT BRAND SECTION ================= */}
-      <div
-        className="hidden lg:flex relative flex-col justify-between px-16 py-14
-        bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-800 text-white"
-      >
-        {/* TOP LOGO */}
-        <div className="flex items-center gap-3 z-10">
-          <div className="h-10 w-10 rounded-xl bg-white/90 flex items-center justify-center">
-            <span className="text-indigo-700 font-bold text-xl">*</span>
+          <div className="relative z-20">
+            <Logo />
           </div>
-          <span className="text-xl font-semibold">MeetNeX</span>
+
+          <div className="relative z-20 space-y-8">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.03] border border-white/10 text-zinc-500 text-[10px] uppercase tracking-[0.25em] font-bold"
+            >
+              <Zap size={12} className="text-zinc-400" />
+              Core Protocol v1.0
+            </motion.div>
+            
+            <h1 className="text-6xl font-bold tracking-tighter text-white leading-[0.95]">
+              Beyond <br />
+              <span className="text-zinc-600">Sync.</span>
+            </h1>
+            
+            <div className="space-y-5 pt-4">
+              {[
+                { icon: <Shield size={18}/>, text: "End-to-End Encryption" },
+                { icon: <Zap size={18}/>, text: "Sub-10ms Global Latency" }
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-4 text-zinc-500 hover:text-zinc-300 transition-colors cursor-default group">
+                  <div className="p-2 rounded-lg bg-white/[0.03] border border-white/5 group-hover:border-indigo-500/50 transition-all">
+                    {item.icon}
+                  </div>
+                  <span className="text-sm font-medium tracking-tight">{item.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative z-20 flex items-center gap-4">
+             <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+             <p className="text-[10px] text-zinc-700 uppercase tracking-widest font-bold">
+               SignIn 
+             </p>
+          </div>
         </div>
 
-        {/* CENTER TEXT */}
-        <div className="max-w-lg z-10">
-          <h1 className="text-5xl font-bold leading-tight">
-            Hello MeetNeX! 👋
-          </h1>
-
-          <p className="mt-6 text-lg text-white/90">
-            Skip repetitive and manual video-meeting tasks.
-            Meet smarter, faster and more securely with MeetNeX.
-          </p>
+        {/* ================= THE BLENDING PARTITION (The "Creative Fix") ================= */}
+        {/* This creates a skewed divider that bleeds the black into the white */}
+        <div className="hidden lg:block absolute left-[38%] top-0 bottom-0 w-32 z-20 pointer-events-none">
+            {/* Skewed Shape */}
+            <div className="absolute inset-0 bg-[#0a0a0b] origin-top-left -skew-x-[4deg] transform translate-x-[-50%]" />
+            {/* Soft Shadow Bleed */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b] to-transparent opacity-20 blur-xl translate-x-[-20%]" />
         </div>
 
-        <div>
-          <img
-            src="/loginBanner.png"
-            alt="MeetNeX Login Illustration"
-            className="w-[420px] xl:w-[480px]"
-          />
+        {/* ================= RIGHT: THE ACTION SPACE (62%) ================= */}
+        <div className="flex-1 bg-white relative flex flex-col items-center justify-center p-8 lg:p-20 z-10">
+          
+          {/* Ambient center glow to pop the white form */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/[0.03] blur-[150px] rounded-full pointer-events-none" />
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="w-full max-w-[420px] lg:ml-20"
+          >
+        
+            <div className="relative group">
+              {/* Subtle card-like hover for the form area */}
+              <div className="absolute -inset-6 bg-zinc-50/50 rounded-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 -z-10" />
+              <LoginForm />
+            </div>
+
+            <div className="mt-12 flex items-center justify-between border-t border-zinc-100 pt-8">
+              <span className="text-xs text-zinc-400">New to the protocol?</span>
+           
+            </div>
+          </motion.div>
+
+          {/* Vertical Branding */}
+          <div className="absolute top-16 right-16 hidden xl:block overflow-hidden h-32">
+            <motion.div 
+              animate={{ y: [0, -20, 0] }}
+              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+              className="text-[9px] font-bold text-zinc-200 uppercase tracking-[0.6em] [writing-mode:vertical-lr]"
+            >
+              MeetNeX Systems • 2025
+            </motion.div>
+          </div>
         </div>
 
-        {/* BOTTOM FOOTER */}
-        <p className="text-sm text-white/70 z-10">
-          © {new Date().getFullYear()} MeetNeX. All rights reserved.
-        </p>
       </div>
-
-      {/* ================= RIGHT LOGIN SECTION ================= */}
-      <div className="flex items-center justify-center px-6 sm:px-10 bg-white">
-        <div className="w-full max-w-md z-10">
-          <LoginForm />
-        </div>
-      </div>
-
     </div>
   );
 }

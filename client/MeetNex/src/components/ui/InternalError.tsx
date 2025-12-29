@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { AlertTriangle, RefreshCcw } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import  Button  from "./buttons/Button";
 
 export default function InternalServerError() {

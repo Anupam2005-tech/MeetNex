@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FileText, MoreVertical, Download } from "lucide-react";
 import { cn } from "@/lib/Utils";
 
@@ -17,7 +17,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ text, fileName, fi
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isMe = sender === "me";
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -28,17 +27,36 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ text, fileName, fi
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  const handleDownload = () => {
-    if (!fileUrl) return;
-    const link = document.createElement("a");
-    link.href = fileUrl;
-    link.download = fileName || "download";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setShowDropdown(false);
-  };
 
+  const handleDownload = async () => {
+    if (!fileUrl) {
+      console.error('Download failed: No URL provided');
+      return;
+    }
+
+    try {
+      const response = await fetch(fileUrl);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = fileName || "download";
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+      setShowDropdown(false);
+
+    } catch (error) {
+      console.error("Download failed:", error);
+      const link = document.createElement("a");
+      link.href = fileUrl;
+      link.download = fileName || "download";
+      link.target = "_blank";
+      link.click();
+    }
+  };
   return (
     <div className={cn("flex w-full mb-3 px-1", isMe ? "justify-end" : "justify-start")}>
       <div className={cn("flex flex-col max-w-[85%]", isMe ? "items-end" : "items-start")}>
@@ -46,7 +64,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ text, fileName, fi
           "relative p-1 rounded-[20px] shadow-sm",
           isMe ? "bg-blue-600 text-white rounded-tr-none" : "bg-white border border-gray-100 text-gray-800 rounded-tl-none"
         )}>
-          
+
           {/* FILE ATTACHMENT CARD */}
           {fileName && (
             <div className={cn(
@@ -59,7 +77,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ text, fileName, fi
               )}>
                 <FileText size={20} />
               </div>
-              
+
               <div className="flex-1 flex flex-col overflow-hidden pr-6">
                 <span className="text-xs font-bold truncate">{fileName}</span>
                 <span className={cn("text-[10px] opacity-70", isMe ? "text-blue-100" : "text-gray-500")}>
@@ -69,7 +87,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ text, fileName, fi
 
               {/* DROPDOWN TRIGGER */}
               <div className="absolute top-2 right-2" ref={dropdownRef}>
-                <button 
+                <button
                   onClick={() => setShowDropdown(!showDropdown)}
                   className={cn(
                     "p-1 rounded-md transition-colors",
@@ -81,14 +99,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ text, fileName, fi
 
                 {showDropdown && (
                   <div className="absolute right-0 top-7 w-32 bg-white rounded-xl shadow-xl border border-gray-100 z-50 py-1 animate-in fade-in zoom-in-95 duration-100">
-                    <button 
+                    <button
                       onClick={handleDownload}
                       className="flex items-center gap-2 w-full px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 font-medium"
                     >
                       <Download size={14} className="text-blue-500" />
                       Download
                     </button>
-                   
+
                   </div>
                 )}
               </div>

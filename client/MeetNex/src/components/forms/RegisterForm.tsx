@@ -1,4 +1,3 @@
-import React from 'react'
 import {SignUp} from '@clerk/clerk-react'
 import Loader from '../ui/Loader'
 function RegisterForm() {

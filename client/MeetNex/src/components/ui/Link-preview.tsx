@@ -1,60 +1,43 @@
-"use client";
-import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { encode } from "qss";
-import React from "react";
-import {
-  AnimatePresence,
-  motion,
-  useMotionValue,
-  useSpring,
-} from "framer-motion";
+import { AnimatePresence, motion, useMotionValue, useSpring } from "framer-motion";
 import { cn } from "../../lib/Utils";
 
 type LinkPreviewProps = {
   children: React.ReactNode;
-  url: string;
+  url?: string;
   className?: string;
   width?: number;
   height?: number;
-  quality?: number;
-  layout?: string;
-} & (
-  | { isStatic: true; imageSrc: string }
-  | { isStatic?: false; imageSrc?: never }
-);
+  isStatic?: boolean;
+  imageSrc?: string;
+  previewComponent?: React.ReactNode; 
+};
 
-export const LinkPreview = ({
+export default function LinkPreview ({
   children,
-  url,
+  url = "#",
   className,
-  width = 200,
-  height = 125,
+  width = 300,
+  height = 200,
   isStatic = false,
   imageSrc = "",
-}: LinkPreviewProps) => {
-  let src;
-  if (!isStatic) {
-    const params = encode({
-      url,
-      screenshot: true,
-      meta: false,
-      embed: "screenshot.url",
-      colorScheme: "dark",
-      "viewport.isMobile": true,
-      "viewport.width": width * 3,
-      "viewport.height": height * 3,
-    });
-    src = `https://api.microlink.io/?${params}`;
-  } else {
-    src = imageSrc;
-  }
+  previewComponent,
+}: LinkPreviewProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [side, setSide] = useState<"top" | "bottom">("top");
 
-  const [isOpen, setOpen] = React.useState(false);
-  const [isMounted, setIsMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const params = encode({
+    url,
+    screenshot: true,
+    meta: false,
+    embed: "screenshot.url",
+    "viewport.isMobile": true,
+    "viewport.width": width * 2,
+    "viewport.height": height * 2,
+  });
+  const src = isStatic ? imageSrc : `https://api.microlink.io/?${params}`;
 
   const x = useMotionValue(0);
   const translateX = useSpring(x, { stiffness: 100, damping: 15 });
@@ -64,69 +47,79 @@ export const LinkPreview = ({
     const eventOffsetX = event.clientX - targetRect.left;
     const offsetFromCenter = (eventOffsetX - targetRect.width / 2) / 2;
     x.set(offsetFromCenter);
+
+    if (targetRect.top < height + 50) setSide("bottom");
+    else setSide("top");
   };
 
-  return (
+  const isExternal = url.startsWith("http");
+
+  // VIRTUAL VIEWPORT LOGIC
+  // We simulate a 1280px wide screen and scale it down to the 'width' prop
+  const virtualWidth = 1280;
+  const virtualHeight = (height / width) * virtualWidth;
+  const scale = width / virtualWidth;
+
+  const RenderContent = () => (
     <>
-      {isMounted && (
-        <div className="hidden">
-          <img src={src} width={width} height={height} alt="hidden image" />
-        </div>
-      )}
-      <HoverCardPrimitive.Root
-        openDelay={50}
-        closeDelay={100}
-        onOpenChange={setOpen}
-      >
-        <HoverCardPrimitive.Trigger
-          asChild
-          onMouseMove={handleMouseMove}
-        >
-          <a
-            href={url}
-            className={cn("inline-block text-white underline decoration-dotted underline-offset-2 transition-colors cursor-pointer hover:text-blue-400", className)}
-          >
-            {children}
-          </a>
-        </HoverCardPrimitive.Trigger>
-        <HoverCardPrimitive.Content
-          className="z-50 [transform-origin:var(--radix-hover-card-content-transform-origin)]"
-          side="top"
-          align="center"
-          sideOffset={10}
-        >
-          <AnimatePresence>
-            {isOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.6 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  scale: 1,
-                  transition: { type: "spring", stiffness: 260, damping: 20 },
-                }}
-                exit={{ opacity: 0, y: 20, scale: 0.6 }}
-                className="shadow-2xl rounded-xl overflow-hidden bg-white dark:bg-neutral-900 border border-white/10"
-                style={{ x: translateX }}
-              >
-                <a
-                  href={url}
-                  className="block p-1 bg-white dark:bg-neutral-900"
-                  style={{ fontSize: 0 }}
-                >
-                  <img
-                    src={isStatic ? imageSrc : src}
-                    width={width}
-                    height={height}
-                    className="rounded-lg object-cover"
-                    alt="preview image"
-                  />
-                </a>
-              </motion.div>
+      <div className="opacity-100 flex items-center justify-center">
+        {children}
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: side === "top" ? 20 : -20, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: side === "top" ? 20 : -20, scale: 0.8 }}
+            style={{ x: translateX, left: "50%", translateX: "-50%" }}
+            className={cn(
+              "absolute z-[100] pointer-events-none",
+              side === "top" ? "bottom-full mb-4" : "top-full mt-4"
             )}
-          </AnimatePresence>
-        </HoverCardPrimitive.Content>
-      </HoverCardPrimitive.Root>
+          >
+            <div className="shadow-2xl rounded-2xl overflow-hidden bg-white dark:bg-neutral-900 border border-white/10 p-1">
+              <div 
+                className="rounded-xl overflow-hidden bg-white dark:bg-black"
+                style={{ width: `${width}px`, height: `${height}px`, position: 'relative' }}
+              >
+                {previewComponent ? (
+                  <div 
+                    className="origin-top-left"
+                    style={{ 
+                        width: `${virtualWidth}px`, 
+                        height: `${virtualHeight}px`,
+                        transform: `scale(${scale})`,
+                        pointerEvents: 'none' 
+                    }}
+                  >
+                    {previewComponent}
+                  </div>
+                ) : (
+                  <img src={src} width={width} height={height} className="object-cover block w-full h-full" alt="preview" />
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
+  );
+
+  const commonProps = {
+    className: cn("relative inline-block cursor-pointer", className),
+    onMouseEnter: () => setIsOpen(true),
+    onMouseLeave: () => setIsOpen(false),
+    onMouseMove: handleMouseMove,
+  };
+
+  return isExternal ? (
+    <a href={url} target="_blank" rel="noopener noreferrer" {...commonProps}>
+      <RenderContent />
+    </a>
+  ) : (
+    <Link to={url} {...commonProps}>
+      <RenderContent />
+    </Link>
   );
 };

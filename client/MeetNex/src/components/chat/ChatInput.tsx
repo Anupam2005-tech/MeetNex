@@ -1,19 +1,26 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect,lazy,Suspense } from "react";
 import { Send, FileText, X, Plus, Smile } from "lucide-react";
-import EmojiPicker, { Theme } from "emoji-picker-react";
+import { Theme } from "emoji-picker-react";
+const EmojiPicker = lazy(() => import("emoji-picker-react"));
 
 interface Attachment {
   file: File;
-  type: "file"; // Removed "image"
+  type: "file";
 }
 
 interface ChatInputProps {
   onSend: (message: string, attachments: Attachment[]) => void;
   disabled?: boolean;
   placeholder?: string;
+  hideAttachments?: boolean; // New Prop
 }
 
-const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled, placeholder = "Type a message..." }) => {
+const ChatInput: React.FC<ChatInputProps> = ({ 
+  onSend, 
+  disabled, 
+  placeholder = "Type a message...",
+  hideAttachments = false // Default to showing them
+}) => {
   const [message, setMessage] = useState("");
   const [showOptions, setShowOptions] = useState(false);
   const [showEmoji, setShowEmoji] = useState(false);
@@ -59,8 +66,8 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled, placeholder = "
 
   return (
     <div className="relative flex flex-col gap-2 w-full font-sans">
-      {/* ATTACHMENT PREVIEWS (Documents Only) */}
-      {attachments.length > 0 && (
+      {/* ATTACHMENT PREVIEWS - Only show if attachments aren't hidden */}
+      {!hideAttachments && attachments.length > 0 && (
         <div className="flex gap-2 flex-wrap px-1 pb-1">
           {attachments.map((att, idx) => (
             <div key={idx} className="flex items-center gap-1.5 bg-gray-100/80 backdrop-blur-sm border border-gray-200 pl-2 pr-1 py-1 rounded-lg text-[11px] font-medium text-gray-600">
@@ -76,35 +83,36 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled, placeholder = "
 
       <div className="group relative flex items-end gap-2 bg-gray-100/50 hover:bg-gray-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/20 transition-all duration-300 border-none rounded-[24px] p-1.5 shadow-sm">
         
-        {/* OPTIONS MENU */}
-        <div className="relative" ref={optionsRef}>
-          <button
-            type="button"
-            onClick={() => { setShowOptions(!showOptions); setShowEmoji(false); }}
-            className={`h-9 w-9 flex items-center justify-center rounded-full transition-all duration-300 outline-none ${
-              showOptions ? "bg-gray-900 text-white rotate-45" : "text-gray-500 hover:bg-gray-200"
-            }`}
-          >
-            <Plus size={20} />
-          </button>
+        {/* OPTIONS MENU - HIDDEN IF hideAttachments IS TRUE */}
+        {!hideAttachments && (
+          <div className="relative" ref={optionsRef}>
+            <button
+              type="button"
+              onClick={() => { setShowOptions(!showOptions); setShowEmoji(false); }}
+              className={`h-9 w-9 flex items-center justify-center rounded-full transition-all duration-300 outline-none ${
+                showOptions ? "bg-gray-900 text-white rotate-45" : "text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              <Plus size={20} />
+            </button>
 
-          {showOptions && (
-            <div className="absolute bottom-12 left-0 w-44 bg-white border border-gray-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-1.5 z-[60] animate-in slide-in-from-bottom-2 duration-200">
-              <button 
-                type="button" 
-                onClick={() => fileInputRef.current?.click()} 
-                className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-gray-50 rounded-xl text-sm text-gray-700 outline-none transition-colors"
-              >
-                <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
-                  <FileText size={18} />
-                </div>
-                Documents
-              </button>
-            </div>
-          )}
-        </div>
+            {showOptions && (
+              <div className="absolute bottom-12 left-0 w-44 bg-white border border-gray-100 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.1)] p-1.5 z-[60] animate-in slide-in-from-bottom-2 duration-200">
+                <button 
+                  type="button" 
+                  onClick={() => fileInputRef.current?.click()} 
+                  className="flex items-center gap-3 w-full px-3 py-2.5 hover:bg-gray-50 rounded-xl text-sm text-gray-700 outline-none transition-colors"
+                >
+                  <div className="w-8 h-8 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                    <FileText size={18} />
+                  </div>
+                  Documents
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
-        {/* Removed Image Input Ref */}
         <input 
           ref={fileInputRef} 
           type="file" 
@@ -131,16 +139,10 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled, placeholder = "
           </button>
 
           {showEmoji && (
-            <div className="absolute bottom-12 left-0 z-[60] shadow-2xl animate-in slide-in-from-bottom-2 duration-200">
-              <EmojiPicker 
-                onEmojiClick={onEmojiClick}
-                theme={Theme.LIGHT}
-                width={300}
-                height={350}
-                skinTonesDisabled
-              />
-            </div>
-          )}
+  <Suspense fallback={<div>Loading...</div>}>
+    <EmojiPicker theme={Theme.DARK} onEmojiClick={onEmojiClick} />
+  </Suspense>
+)}
         </div>
 
         <textarea
@@ -151,7 +153,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, disabled, placeholder = "
           disabled={disabled}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), sendMessage())}
-          className="flex-1 bg-transparent border-none focus:ring-0 outline-none text-[15px] text-gray-800 py-2 resize-none max-h-[150px] placeholder:text-gray-400 leading-snug scrollbar-none"
+          className={`flex-1 bg-transparent border-none focus:ring-0 outline-none text-[15px] text-gray-800 py-2 resize-none max-h-[150px] placeholder:text-gray-400 leading-snug scrollbar-none ${hideAttachments ? 'ml-2' : ''}`}
         />
 
         <button

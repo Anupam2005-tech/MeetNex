@@ -9,6 +9,7 @@ import HomeLayout from "@/pages/dashboard/home/HomeLayout";
 import RoomPage from "@/pages/meeting/RoomPage";
 import { ProtectedRoute } from "./ProtectedRoutes";
 import LumiChat from "@/components/ui/LumiChat";
+import JoinMeetingPage from "@/pages/meeting/JoinMeetingPage";
 
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage"));
@@ -97,6 +98,11 @@ function Approuter() {
           <Route path="/lumi/chat" element={
             <ProtectedRoute>
               <LumiChat/>
+            </ProtectedRoute>
+          }/>
+          <Route path="/join" element={
+            <ProtectedRoute>
+              <JoinMeetingPage/>
             </ProtectedRoute>
           }/>
           
