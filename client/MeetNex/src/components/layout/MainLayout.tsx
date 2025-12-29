@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sidebar, SidebarBody, SidebarLink } from "./Sidebar";
+import { Sidebar, SidebarBody } from "./Sidebar";
 import {
   IconVideo,
   IconPlus,
@@ -10,20 +10,15 @@ import {
   IconChevronDown
 } from "@tabler/icons-react";
 import MainLayoutText from "./MainLayoutText";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom"; // Switched to Link
 import { UserButton } from "@clerk/clerk-react";
 import { Modal } from "../ui/Modal"; 
 import RoomID from "@/pages/meeting/RoomID";
 import { motion, AnimatePresence } from "framer-motion";
+import Logo from "../ui/Logo";
 
-// FIXED LOGO: Standard structure to prevent recursion errors
 const BrandLogo = () => (
-  <Link to="/" className="flex items-center gap-3 px-2 group">
-    <div className="h-9 w-9 rounded-xl bg-zinc-900 flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-300">
-      <span className="text-white font-bold text-xl select-none">*</span>
-    </div>
-    <span className="text-xl font-bold tracking-tighter text-zinc-900">MeetNeX</span>
-  </Link>
+    <Logo/>
 );
 
 const CurrentDateTime = () => {
@@ -43,12 +38,14 @@ const CurrentDateTime = () => {
 };
 
 export function MainLayout() {
-  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [meetingDropdownOpen, setMeetingDropdownOpen] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>("Home");
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  
+  // Create a room ID state so the Links have a destination to point to
+  const [generatedRoomId, setGeneratedRoomId] = useState("");
 
   const links = [
     {
@@ -63,20 +60,20 @@ export function MainLayout() {
   ];
 
   const handleSubLinkClick = (subLabel: string) => {
-    if (subLabel === "Instant Meeting") setPendingRoute("instant");
-    else if (subLabel === "Schedule") setIsScheduleModalOpen(true);
-  };
-
-  const createMeetingAndNavigate = (mode: "p2p" | "sfu") => {
-    const backendRoomId = Math.random().toString(36).substring(2, 10).toUpperCase(); 
-    navigate(`/room/${backendRoomId}?type=${mode}`);
-    setPendingRoute(null);
+    if (subLabel === "Instant Meeting") {
+      // Generate the ID now so the Link in the overlay is ready
+      const newId = Math.random().toString(36).substring(2, 10).toUpperCase();
+      setGeneratedRoomId(newId);
+      setPendingRoute("instant");
+    } else if (subLabel === "Schedule") {
+      setIsScheduleModalOpen(true);
+    }
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#F9F9FB] overflow-hidden relative font-sans antialiased">
+    <div className="flex h-screen w-full bg-[#F9F9FB] overflow-hidden relative antialiased">
       
-      {/* SELECTION OVERLAY (Architecture Choice) */}
+      {/* SELECTION OVERLAY */}
       <AnimatePresence>
         {pendingRoute === "instant" && (
           <motion.div 
@@ -93,10 +90,11 @@ export function MainLayout() {
                   { mode: "p2p", label: "Direct 1:1", desc: "Peer-to-Peer Mesh", icon: <IconUser size={24}/> },
                   { mode: "sfu", label: "Group Call", desc: "Global SFU Relay", icon: <IconUsers size={24}/> }
                 ].map((opt) => (
-                  <button
+                  <Link
                     key={opt.mode}
-                    onClick={() => createMeetingAndNavigate(opt.mode as any)}
-                    className="flex flex-col items-start gap-4 p-8 bg-white border border-zinc-200 rounded-[32px] hover:border-zinc-900 transition-all group shadow-sm hover:shadow-xl"
+                    to={`/room/${generatedRoomId}?type=${opt.mode}`}
+                    onClick={() => setPendingRoute(null)}
+                    className="flex flex-col items-start gap-4 p-8 bg-white border border-zinc-200 rounded-[32px] hover:border-zinc-900 transition-all group shadow-sm hover:shadow-xl no-underline"
                   >
                     <div className="p-3 rounded-xl bg-zinc-50 group-hover:bg-zinc-900 group-hover:text-white transition-colors">
                         {opt.icon}
@@ -105,7 +103,7 @@ export function MainLayout() {
                         <div className="font-bold text-xl text-zinc-900">{opt.label}</div>
                         <div className="text-xs text-zinc-400 uppercase tracking-widest mt-1">{opt.desc}</div>
                     </div>
-                  </button>
+                  </Link>
                 ))}
               </div>
               <button onClick={() => setPendingRoute(null)} className="mt-12 text-zinc-400 hover:text-zinc-900 font-bold uppercase text-[10px] tracking-widest transition-colors border-b border-zinc-200 pb-1">
@@ -128,25 +126,42 @@ export function MainLayout() {
 
                 return (
                   <div key={idx} className="w-full">
-                    <button
-                      onClick={() => {
-                        if (link.dropdown) setMeetingDropdownOpen(isDropdownOpen ? null : link.label);
-                        setSelected(link.label);
-                      }}
-                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200
-                        ${isActive 
-                          ? "bg-zinc-900 text-white shadow-lg" 
-                          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-                        }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {link.icon}
-                        <span className="text-sm font-semibold">{link.label}</span>
-                      </div>
-                      {link.dropdown && (
-                        <IconChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                      )}
-                    </button>
+                    {link.to ? (
+                      <Link
+                        to={link.to}
+                        onClick={() => setSelected(link.label)}
+                        className={`w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 no-underline
+                          ${isActive 
+                            ? "bg-zinc-900 text-white shadow-lg" 
+                            : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                          }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          {link.icon}
+                          <span className="text-sm font-semibold">{link.label}</span>
+                        </div>
+                      </Link>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          if (link.dropdown) setMeetingDropdownOpen(isDropdownOpen ? null : link.label);
+                          setSelected(link.label);
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200
+                          ${isActive 
+                            ? "bg-zinc-900 text-white shadow-lg" 
+                            : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                          }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          {link.icon}
+                          <span className="text-sm font-semibold">{link.label}</span>
+                        </div>
+                        {link.dropdown && (
+                          <IconChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                        )}
+                      </button>
+                    )}
 
                     <AnimatePresence>
                       {link.dropdown && isDropdownOpen && (
@@ -173,24 +188,22 @@ export function MainLayout() {
             </div>
           </div>
 
-          {/* USER PROFILE SECTION */}
-          <div className="px-4 pb-8">
-            <div className="p-3 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-center justify-center hover:bg-zinc-100 transition-colors">
-              <UserButton 
-                showName 
-                appearance={{ 
-                  elements: { 
-                    userButtonOuterIdentifier: "text-[13px] font-bold text-zinc-800",
-                    userButtonBox: "flex-row-reverse"
-                  } 
-                }} 
-              />
-            </div>
+          <div className="px-4 pb-4">
+            <UserButton 
+              showName 
+              appearance={{ 
+                elements: { 
+                  userButtonBox: "flex flex-row items-center gap-2",
+                  userButtonAvatarBox: "order-0",
+                  userButtonOuterIdentifier: "order-1 text-[13px] font-bold text-zinc-800",
+                  userButtonTrigger: "flex flex-row items-center"
+                } 
+              }} 
+            />
           </div>
         </SidebarBody>
       </Sidebar>
 
-      {/* MAIN CONTENT STAGE */}
       <main className="relative flex-1 flex flex-col p-8 overflow-hidden bg-white">
         <div className="absolute right-12 top-10 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-zinc-200/60 text-[11px] font-bold text-zinc-500 tracking-widest uppercase shadow-sm z-50">
           <CurrentDateTime />
@@ -200,37 +213,34 @@ export function MainLayout() {
         </div>
       </main>
 
-    <Modal 
-  isOpen={isScheduleModalOpen} 
-  onClose={() => setIsScheduleModalOpen(false)} 
-  title="Schedule Session"
-  // These classes assume your Modal component passes props to the underlying container
-  className="max-w-md w-full bg-white/90 backdrop-blur-xl border border-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[32px] overflow-hidden"
->
-  <div className="px-6 py-8 flex flex-col items-center text-center">
-    {/* Decorative Icon */}
-    <div className="h-16 w-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6">
-      <IconClock className="h-8 w-8 text-indigo-600" />
-    </div>
-    
-    <div className="space-y-2 mb-8">
-      <h3 className="text-2xl font-bold text-zinc-900 tracking-tight">Your Meeting is Ready</h3>
-      <p className="text-zinc-500 text-sm">Share this unique Room ID with your participants to start the secure session.</p>
-    </div>
+      <Modal 
+        isOpen={isScheduleModalOpen} 
+        onClose={() => setIsScheduleModalOpen(false)} 
+        title="Schedule Session"
+        className="max-w-md w-full bg-white/90 backdrop-blur-xl border border-white shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] rounded-[32px] overflow-hidden"
+      >
+        <div className="px-6 py-8 flex flex-col items-center text-center">
+          <div className="h-16 w-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-6">
+            <IconClock className="h-8 w-8 text-indigo-600" />
+          </div>
+          
+          <div className="space-y-2 mb-8">
+            <h3 className="text-2xl font-bold text-zinc-900 tracking-tight">Your Meeting is Ready</h3>
+            <p className="text-zinc-500 text-sm">Share this unique Room ID with your participants to start the secure session.</p>
+          </div>
 
-    {/* The RoomID component container */}
-    <div className="w-full bg-zinc-50 rounded-2xl p-4 border border-zinc-100 mb-6">
-      <RoomID />
-    </div>
+          <div className="w-full bg-zinc-50 rounded-2xl p-4 border border-zinc-100 mb-6">
+            <RoomID />
+          </div>
 
-    <button 
-      onClick={() => setIsScheduleModalOpen(false)}
-      className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-bold text-sm hover:bg-zinc-800 transition-all shadow-lg shadow-zinc-200 active:scale-[0.98]"
-    >
-      Done
-    </button>
-  </div>
-</Modal>
+          <button 
+            onClick={() => setIsScheduleModalOpen(false)}
+            className="w-full py-4 bg-zinc-900 text-white rounded-2xl font-bold text-sm hover:bg-zinc-800 transition-all shadow-lg"
+          >
+            Done
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

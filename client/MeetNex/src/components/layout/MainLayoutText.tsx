@@ -20,16 +20,16 @@ function MainLayoutText() {
     <section className="w-full flex flex-col items-center max-w-6xl py-10">
       <div className="text-center mb-4">
         <span className="inline-block px-3 py-1 rounded-full bg-zinc-100 text-zinc-500 text-[10px] font-bold uppercase tracking-[0.3em] mb-8">
-          MeetNeX Core v2.0
+          MeetNeX  v1.0
         </span>
         <h1 className="text-4xl md:text-7xl font-bold tracking-tighter text-zinc-900 leading-[0.9] text-center">
           Every Conversation <br />
           <span className="text-zinc-400">Deserves</span>{" "}
           <span className="text-zinc-900 inline-flex items-center gap-4">
             Matters: 
-            <span className="text-indigo-600 min-w-[200px] text-left">
+            
               <Typewriter text="MeetNex." />
-            </span>
+           
           </span>
         </h1>
       </div>

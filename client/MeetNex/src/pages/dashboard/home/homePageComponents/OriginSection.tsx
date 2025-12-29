@@ -91,7 +91,7 @@ export default function OriginSection() {
 >
   <span className="relative z-10 font-bold">
     <LinkPreview 
-      url="https://maps.google.com" 
+      url="https://maps.app.goo.gl/EXgULLUp37zkEyJd6" 
       isStatic={true} 
       imageSrc="/matarbari.jpg"
       className="text-white"
@@ -147,7 +147,7 @@ export default function OriginSection() {
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
             className="relative w-full h-full scale-90 md:scale-100 z-20 pointer-events-auto filter drop-shadow-[0_0_50px_rgba(99,102,241,0.2)]"
           >
-            <Globe />
+            <LinkPreview url="https://maps.app.goo.gl/EXgULLUp37zkEyJd6" isStatic={true} imageSrc="/matarbari.jpg" ><Globe /></LinkPreview>
           </motion.div>
         </motion.div>
       </div>

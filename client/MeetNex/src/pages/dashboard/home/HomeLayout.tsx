@@ -4,6 +4,7 @@ import Navbar from "./homePageComponents/Navbar";
 import LaserFlow from "./homePageComponents/LaserFlow";
 import GlowButton from "@/components/ui/buttons/GlowButton";
 import AnimatedText from "@/components/ui/AnimatedText";
+import { Link } from "react-router-dom";
 /* ------------------- Lazy-loaded components ------------------- */
 
 
@@ -104,7 +105,7 @@ export default function HomeLayout() {
             />
           </p>
 
-          <GlowButton text="See in Action" icon={<MoveRight size={16} />} />
+          <Link to={'/home'}><GlowButton text="See in Action" icon={<MoveRight size={16} />} /></Link>
         </div>
 
         {/* ================= HERO IMAGE ================= */}
