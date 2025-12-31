@@ -3,9 +3,14 @@ import Loader from '../ui/Loader';
 
 const LoginForm = () => {
   return (
-    <>
-    <SignIn oauthFlow='popup' fallback={<Loader/>} fallbackRedirectUrl={'/home'}/>
-    </>
+    <SignIn 
+      routing="path" 
+      path="/login" // Tell Clerk this component is mounted on /login
+      signUpUrl="/register"
+      fallbackRedirectUrl="/home"
+      forceRedirectUrl="/home"
+      fallback={<Loader/>}
+    />
   );
 };
 
