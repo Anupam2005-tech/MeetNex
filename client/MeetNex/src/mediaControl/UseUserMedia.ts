@@ -10,6 +10,7 @@ export async function userMedia(): Promise<MediaStream> {
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
+        autoGainControl: true
       },
     });
 

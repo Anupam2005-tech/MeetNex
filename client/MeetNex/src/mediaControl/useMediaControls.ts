@@ -9,7 +9,10 @@ export function muteMic(stream?: MediaStream): boolean {
   const tracks = stream.getAudioTracks();
   if (!tracks.length) return false;
 
-  tracks.forEach(track => (track.enabled = false));
+  tracks.forEach(track => (track.enabled = false
+  )
+);
+  
   return true;
 }
 
@@ -42,13 +45,7 @@ export function isMicEnabled(stream?: MediaStream): boolean {
   return !!track?.enabled;
 }
 
-/* =====================================================
-   VIDEO (CAMERA) CONTROLS — ZOOM / MEET LEVEL
-   ===================================================== */
 
-/**
- * Turn camera OFF completely (LED OFF)
- */
 export function stopCamera(stream?: MediaStream): boolean {
   if (!stream) return false;
 
@@ -71,6 +68,7 @@ export async function restartCamera(
   try {
     const newStream = await navigator.mediaDevices.getUserMedia({
       video: true,
+      
     });
 
     const newTrack = newStream.getVideoTracks()[0];

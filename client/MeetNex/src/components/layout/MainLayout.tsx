@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Sidebar, SidebarBody } from "./Sidebar";
 import {
   IconVideo,
@@ -7,15 +7,17 @@ import {
   IconMessage2Bolt,
   IconUser,
   IconUsers,
-  IconChevronDown
+  IconChevronDown,
+  IconSettings // Added for the settings button
 } from "@tabler/icons-react";
 import MainLayoutText from "./MainLayoutText";
-import { Link } from "react-router-dom"; // Switched to Link
+import { Link } from "react-router-dom"; 
 import { UserButton } from "@clerk/clerk-react";
 import { Modal } from "../ui/Modal"; 
 import RoomID from "@/pages/meeting/RoomID";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "../ui/Logo";
+import Setting from "./Settings";
 
 const BrandLogo = () => (
     <Logo/>
@@ -37,14 +39,16 @@ const CurrentDateTime = () => {
   );
 };
 
-export function MainLayout() {
+export default function MainLayout() {
   const [open, setOpen] = useState(false);
   const [meetingDropdownOpen, setMeetingDropdownOpen] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>("Home");
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   
-  // Create a room ID state so the Links have a destination to point to
+  // NEW: State for Settings Modal
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  
   const [generatedRoomId, setGeneratedRoomId] = useState("");
 
   const links = [
@@ -56,12 +60,17 @@ export function MainLayout() {
         { label: "Schedule", icon: <IconClock className="h-4 w-4" /> },
       ],
     },
-    { label: "Lumi AI", to: "/lumi/chat", icon: <IconMessage2Bolt className="h-5 w-5" /> },
+    { label: "Lumi AI", to: "/lumi", icon: <IconMessage2Bolt className="h-5 w-5" /> },
+    // INTEGRATED SETTINGS BUTTON (Placed below Lumi)
+    { 
+      label: "Settings", 
+      icon: <IconSettings className="h-5 w-5" />, 
+      onClick: () => setIsSettingsOpen(true) 
+    },
   ];
 
   const handleSubLinkClick = (subLabel: string) => {
     if (subLabel === "Instant Meeting") {
-      // Generate the ID now so the Link in the overlay is ready
       const newId = Math.random().toString(36).substring(2, 10).toUpperCase();
       setGeneratedRoomId(newId);
       setPendingRoute("instant");
@@ -73,6 +82,12 @@ export function MainLayout() {
   return (
     <div className="flex h-screen w-full bg-[#F9F9FB] overflow-hidden relative antialiased">
       
+      {/* SASSY SETTINGS MODAL */}
+      <Setting 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
+
       {/* SELECTION OVERLAY */}
       <AnimatePresence>
         {pendingRoute === "instant" && (
@@ -124,44 +139,53 @@ export function MainLayout() {
                 const isActive = selected === link.label;
                 const isDropdownOpen = meetingDropdownOpen === link.label;
 
+                // Handle Standard Links (Lumi AI)
+                if (link.to) {
+                  return (
+                    <Link
+                      key={idx}
+                      to={link.to}
+                      onClick={() => setSelected(link.label)}
+                      className={`w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 no-underline
+                        ${isActive 
+                          ? "bg-zinc-900 text-white shadow-lg" 
+                          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {link.icon}
+                        <span className="text-sm font-semibold">{link.label}</span>
+                      </div>
+                    </Link>
+                  );
+                }
+
+                // Handle Action Buttons (Meetings Dropdown or Settings)
                 return (
                   <div key={idx} className="w-full">
-                    {link.to ? (
-                      <Link
-                        to={link.to}
-                        onClick={() => setSelected(link.label)}
-                        className={`w-full flex items-center px-4 py-3 rounded-xl transition-all duration-200 no-underline
-                          ${isActive 
-                            ? "bg-zinc-900 text-white shadow-lg" 
-                            : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-                          }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          {link.icon}
-                          <span className="text-sm font-semibold">{link.label}</span>
-                        </div>
-                      </Link>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          if (link.dropdown) setMeetingDropdownOpen(isDropdownOpen ? null : link.label);
-                          setSelected(link.label);
-                        }}
-                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200
-                          ${isActive 
-                            ? "bg-zinc-900 text-white shadow-lg" 
-                            : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
-                          }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          {link.icon}
-                          <span className="text-sm font-semibold">{link.label}</span>
-                        </div>
-                        {link.dropdown && (
-                          <IconChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-                        )}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        if (link.onClick) {
+                            link.onClick(); // Triggers Settings Modal
+                        } else if (link.dropdown) {
+                            setMeetingDropdownOpen(isDropdownOpen ? null : link.label);
+                        }
+                        setSelected(link.label);
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200
+                        ${isActive 
+                          ? "bg-zinc-900 text-white shadow-lg" 
+                          : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {link.icon}
+                        <span className="text-sm font-semibold">{link.label}</span>
+                      </div>
+                      {link.dropdown && (
+                        <IconChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                      )}
+                    </button>
 
                     <AnimatePresence>
                       {link.dropdown && isDropdownOpen && (
@@ -213,6 +237,7 @@ export function MainLayout() {
         </div>
       </main>
 
+      {/* SCHEDULE MODAL */}
       <Modal 
         isOpen={isScheduleModalOpen} 
         onClose={() => setIsScheduleModalOpen(false)} 

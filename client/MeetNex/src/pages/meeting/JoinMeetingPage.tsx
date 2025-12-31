@@ -1,190 +1,150 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { FaMicrophone, FaVolumeUp, FaVideo as FaVideoIcon, FaShieldAlt } from "react-icons/fa";
+import { FaMicrophone, FaVideo as FaVideoIcon, FaShieldAlt, FaArrowRight } from "react-icons/fa";
 import Dropdown from "../../components/ui/Dropdown";
 import LocalVideo from "@/components/video/LocalVideo";
 import AudioToggle from "@/components/ui/buttons/AudioToggle";
 import VideoToggle from "@/components/ui/buttons/VideoToggle";
-import { UserDetails } from "@/utils/userDetails";
-
-import {
-  toggleMic as logicToggleMic,
-  toggleCamera as logicToggleCamera,
-  isMicEnabled,
-  isCameraEnabled,
-  stopAllMedia,
-} from "@/mediaControl/useMediaControls";
-
-import {
-  getExternalDevices,
-  onDeviceChanges,
-} from "@/mediaControl/useExternalCount";
+// 1. Import your custom Auth hook
+import { useAppAuth } from "@/context/AuthContext"; 
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom"; 
+import { useMedia } from "@/context/MeetingContext";
 
 const JoinMeetingPage = () => {
-  const streamRef = useRef<MediaStream | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isCameraOff, setIsCameraOff] = useState(false);
-  const user = UserDetails();
+  const { user, isLoaded } = useAppAuth(); 
+  const navigate = useNavigate();
 
-  // --- DEVICE LISTS ---
-  const [deviceLists, setDeviceLists] = useState<{
-    mics: { id: string; label: string }[];
-    speakers: { id: string; label: string }[];
-    cameras: { id: string; label: string }[];
-  }>({
-    mics: [],
-    speakers: [],
-    cameras: []
-  });
-
-  // --- CURRENT SELECTIONS ---
-  const [selectedMic, setSelectedMic] = useState("");
-  const [selectedSpeaker, setSelectedSpeaker] = useState("");
-  const [selectedCamera, setSelectedCamera] = useState("");
-
-  /* ─────────────── 1. FETCH & SYNC HARDWARE ─────────────── */
-  const refreshDevices = useCallback(async () => {
-    const list = await getExternalDevices();
-    
-    const mics = list.mics.map(d => ({ id: d.deviceId, label: d.label }));
-    const speakers = list.speakers.map(d => ({ id: d.deviceId, label: d.label }));
-    const cameras = list.cameras.map(d => ({ id: d.deviceId, label: d.label }));
-
-    setDeviceLists({ mics, speakers, cameras });
-
-    if (mics.length > 0 && !selectedMic) setSelectedMic(mics[0].id);
-    if (speakers.length > 0 && !selectedSpeaker) setSelectedSpeaker(speakers[0].id);
-    if (cameras.length > 0 && !selectedCamera) setSelectedCamera(cameras[0].id);
-  }, [selectedMic, selectedSpeaker, selectedCamera]);
+  const {
+    isMuted,
+    isCamOff,
+    deviceList,
+    selectedDevice,
+    updateSelectedDevice,
+    handleToggleCam,
+    handleToggleMic,
+    startStream,
+    isMediaActive, 
+  } = useMedia();
 
   useEffect(() => {
-    refreshDevices();
-    return onDeviceChanges(refreshDevices);
-  }, [refreshDevices]);
+    if (!isMediaActive) startStream();
+  }, [startStream, isMediaActive]);
 
-  /* ─────────────── 2. DEVICE SWITCHING LOGIC ─────────────── */
-  useEffect(() => {
-    const switchDevices = async () => {
-      if (!selectedCamera && !selectedMic) return;
-
-      try {
-        stopAllMedia(streamRef.current || undefined);
-
-        const newStream = await navigator.mediaDevices.getUserMedia({
-          video: selectedCamera ? { deviceId: { exact: selectedCamera } } : true,
-          audio: selectedMic ? { deviceId: { exact: selectedMic } } : true,
-        });
-
-        streamRef.current = newStream;
-        setStream(newStream);
-        
-        setIsMuted(!isMicEnabled(newStream));
-        setIsCameraOff(!isCameraEnabled(newStream));
-      } catch (err) {
-        console.error("Error switching devices:", err);
-      }
-    };
-
-    switchDevices();
-  }, [selectedCamera, selectedMic]);
-
-  /* ─────────────── 3. UI HANDLERS ─────────────── */
-  const handleToggleMic = () => {
-    if (!streamRef.current) return;
-    const enabled = logicToggleMic(streamRef.current);
-    setIsMuted(!enabled);
+  const handleJoin = () => {
+    const roomId = "meeting-123"; 
+    navigate(`/room/${roomId}?type=sfu`, { replace: true }); 
   };
 
-  const handleToggleCamera = async () => {
-    if (!streamRef.current) return;
-    const enabled = await logicToggleCamera(streamRef.current);
-    setIsCameraOff(!enabled);
-    setStream(new MediaStream(streamRef.current.getTracks()));
-  };
+  // 3. Handle the "Authenticating" state for a premium feel
+  if (!isLoaded) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-[#F5F5F7]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-zinc-200 border-t-zinc-900 rounded-full animate-spin" />
+          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">Verifying Identity</p>
+        </div>
+      </div>
+    );
+  }
+
+  const formatOptions = (devices: any[]) => 
+    devices.map(device => ({
+      id: device.deviceId,
+      label: device.label || "System Default"
+    }));
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] flex items-center justify-center p-6 ">
-      <div className="w-full max-w-6xl bg-white rounded-[40px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.08)] border border-zinc-100 flex flex-col lg:flex-row overflow-hidden min-h-[680px]">
-        
-        {/* PREVIEW SECTION */}
-        <div className="lg:w-[65%] p-10 lg:p-14 flex flex-col justify-center border-b lg:border-b-0 lg:border-r border-zinc-50">
-          
-          <div className="flex items-center justify-between mb-8 px-2">
-            <div className="flex items-center gap-3">
-              <div className="relative flex h-2 w-2">
-                <span className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${isCameraOff ? 'bg-zinc-200' : 'bg-emerald-400 animate-ping'}`}></span>
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${isCameraOff ? 'bg-zinc-400' : 'bg-emerald-500'}`}></span>
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">
-                {isCameraOff ? "Camera Off" : "Live Studio"}
-              </span>
+    <div className="h-screen w-full bg-white flex overflow-hidden  antialiased">
+      
+      {/* LEFT SIDE: THE STUDIO */}
+      <div className="w-[55%] h-full bg-[#F5F5F7] flex flex-col items-center justify-center p-12 border-r border-zinc-200">
+        <div className="w-full max-w-xl space-y-6">
+          <div className="flex items-center justify-between px-2">
+            <div className="flex items-center gap-2">
+              <div className={`h-1.5 w-1.5 rounded-full ${isCamOff ? 'bg-zinc-400' : 'bg-emerald-500 animate-pulse'}`} />
+              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Studio Preview</span>
             </div>
           </div>
 
-          {/* ADDED 'group' class here to detect hover */}
-          <div className="relative group overflow-hidden rounded-[36px]">
-            <div className="relative aspect-video rounded-[36px] bg-zinc-950 overflow-hidden shadow-2xl border-[6px] border-white ring-1 ring-zinc-100">
-              <LocalVideo stream={stream} isMuted={isMuted} isCameraOff={isCameraOff} />
-              
-              {/* DYNAMIC TOGGLE BUTTONS: Transitions handled via opacity and translate */}
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 drop-shadow-2xl opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 ease-out z-10">
-                <AudioToggle isMuted={isMuted} onToggle={handleToggleMic} />
-                <VideoToggle isCameraOff={isCameraOff} onToggle={handleToggleCamera} />
-              </div>
+          <div className="relative group rounded-[24px] bg-black shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden border-[3px] border-white ring-1 ring-zinc-200">
+            <div className="aspect-video w-full">
+              <LocalVideo />
+            </div>
 
-              {/* Optional: Dark overlay on hover to make buttons pop */}
-              <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+              <AudioToggle isMuted={isMuted} onToggle={handleToggleMic} />
+              <div className="w-[1px] h-3 bg-white/20" />
+              <VideoToggle isCameraOff={isCamOff} onToggle={handleToggleCam} />
             </div>
           </div>
 
-          {/* HARDWARE SELECTORS */}
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Dropdown 
-              icon={<FaMicrophone size={14} />} 
-              options={deviceLists.mics} 
-              value={selectedMic} 
-              onChange={setSelectedMic} 
-            />
-            <Dropdown 
-              icon={<FaVolumeUp size={14} />} 
-              options={deviceLists.speakers} 
-              value={selectedSpeaker} 
-              onChange={setSelectedSpeaker} 
-            />
-            <Dropdown 
-              icon={<FaVideoIcon size={14} />} 
-              options={deviceLists.cameras} 
-              value={selectedCamera} 
-              onChange={setSelectedCamera} 
-            />
+          <div className="flex gap-3 mt-4">
+            <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-xl border border-zinc-200 p-1 flex items-center">
+              <Dropdown
+                icon={<FaMicrophone className="text-zinc-400" size={10} />}
+                options={formatOptions(deviceList.mics)}
+                value={selectedDevice.micId}
+                onChange={(id) => updateSelectedDevice("micId", id)}
+              />
+            </div>
+            <div className="flex-1 bg-white/60 backdrop-blur-sm rounded-xl border border-zinc-200 p-1 flex items-center">
+              <Dropdown
+                icon={<FaVideoIcon className="text-zinc-400" size={10} />}
+                options={formatOptions(deviceList.cam)}
+                value={selectedDevice.camId}
+                onChange={(id) => updateSelectedDevice("camId", id)}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* RIGHT SIDE: THE ACTION */}
+      <div className="w-[45%] h-full flex flex-col justify-between p-16 bg-white">
+        <div className="flex justify-end">
+          <div className="flex items-center gap-2 px-3 py-1 bg-zinc-50 rounded-full border border-zinc-100">
+            <FaShieldAlt className="text-emerald-500" size={10} />
+            <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Secure Entry</span>
           </div>
         </div>
 
-        {/* JOIN PANEL */}
-        <div className="lg:w-[35%] bg-[#F9FAFB] p-12 lg:p-20 flex flex-col justify-center">
-          <div className="space-y-12">
-            <div className="space-y-6">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full shadow-sm border border-zinc-100">
-                <FaShieldAlt className="text-emerald-500" size={10} />
-                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Secured Connection</span>
-              </div>
-              <h1 className="text-5xl font-black text-zinc-900 tracking-tight leading-[0.9]">
-                Ready to <br />
-                <span className="text-emerald-500">Join?</span>
-              </h1>
-              <p className="text-zinc-500 text-sm leading-relaxed">
-                Joining as a <span className="text-zinc-900 font-bold">{user?.firstname}{" "}{user?.lastname}</span>.
-              </p>
-            </div>
-
-            <button className="w-full group relative active:scale-[0.98] transition-transform cursor-pointer">
-              <div className="absolute inset-0 bg-emerald-500/20 rounded-[24px] blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="relative bg-zinc-900 text-white py-6 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3">
-                <FaVideoIcon className="text-emerald-400" />
-                Join Meeting
-              </div>
-            </button>
+        <div className="max-w-sm mx-auto w-full space-y-8">
+          <div className="space-y-2">
+            <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 leading-tight">Ready to <br/>connect?</h1>
+            <p className="text-sm text-zinc-500 font-medium">Everything is set. Step inside.</p>
           </div>
+
+          {/* 4. Use real user data from AuthContext */}
+          <div className="flex items-center gap-3 p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
+            {user?.imageUrl ? (
+              <img 
+                src={user.imageUrl} 
+                alt="Profile" 
+                className="h-10 w-10 rounded-xl object-cover shadow-sm ring-1 ring-zinc-200"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-xl bg-zinc-900 flex items-center justify-center text-white text-sm font-bold">
+                {user?.firstName?.[0]}
+              </div>
+            )}
+            <div>
+              <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">Verified User</p>
+              <p className="text-sm font-semibold text-zinc-800">{user?.fullName}</p>
+            </div>
+          </div>
+
+          <button 
+            onClick={handleJoin}
+            className="w-full h-12 bg-zinc-900 hover:bg-black text-white rounded-xl font-semibold text-sm transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-zinc-200"
+          >
+            Join Meeting
+            <FaArrowRight size={10} className="text-emerald-400" />
+          </button>
+        </div>
+
+        <div className="text-center">
+          <p className="text-[10px] text-zinc-300 font-medium uppercase tracking-[0.2em]">
+            Studio Session • {new Date().getFullYear()}
+          </p>
         </div>
       </div>
     </div>

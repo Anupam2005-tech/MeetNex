@@ -61,7 +61,7 @@ export default function Logo() {
             video calling
           </span>
           <div className="h-[1px] w-full bg-zinc-100 dark:bg-zinc-800/50 flex-1 min-w-[12px]" />
-          <span className="text-[5px] font-mono text-zinc-300 dark:text-zinc-700">v2.1</span>
+          <span className="text-[5px] font-mono text-zinc-300 dark:text-zinc-700">v1.0</span>
         </div>
       </div>
     </div>
