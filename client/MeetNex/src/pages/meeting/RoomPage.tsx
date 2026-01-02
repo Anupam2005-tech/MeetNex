@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams, useParams } from "react-router-dom";
+import { useEffect, useRef, useState, lazy, Suspense } from "react";
+import { useSearchParams, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Copy, Check } from "lucide-react";
-
+import { Copy, Check, Keyboard, HelpCircle } from "lucide-react"; 
+import { useRoomShortcuts } from "@/context/useRoomShortcuts";
 import Controls from "@/components/video/Controls";
 import LocalVideo from "@/components/video/LocalVideo";
-import Participants from "@/pages/meeting/Participants";
-import ChatPanel from "@/components/chat/ChatPanel";
-import P2PMeetingPage from "./P2PMeetingPage";
-import SFUMeetingPage from "./SFUMeetingPage";
+import Loader from "@/components/ui/Loader";
+const Participants = lazy(() => import("@/pages/meeting/Participants"));
+const ChatPanel = lazy(() => import("@/components/chat/ChatPanel"));
+const P2PMeetingPage = lazy(() => import("./P2PMeetingPage"));
+const SFUMeetingPage = lazy(() => import("./SFUMeetingPage"));
 
 import { useMedia } from "@/context/MeetingContext";
 
@@ -17,17 +18,16 @@ function RoomPage() {
   const { roomId } = useParams();
   const isP2P = searchParams.get("type") === "p2p";
   const isSFU = searchParams.get("type") === "sfu";
-  const navigate = useNavigate();
+  useRoomShortcuts()
 
   const meetingCode = roomId || "CONNECTING...";
 
   const {
     stream,
     screenStream,
-    startStream, // Get this to initialize if needed
+    startStream, 
   } = useMedia();
 
-  // If user refreshes the page, stream might be null. Restart it.
   useEffect(() => {
     if (!stream) {
       startStream();
@@ -39,6 +39,7 @@ function RoomPage() {
   const [isControlsVisible, setIsControlsVisible] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [copied, setCopied] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false); // State for shortcut legend
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -70,20 +71,59 @@ function RoomPage() {
         }`}
     >
       <div className="relative flex-1 flex overflow-hidden">
-        <Participants
-          isOpen={showParticipants}
-          onClose={() => setShowParticipants(false)}
-        />
-        <ChatPanel
-          isOpen={showChatPanel}
-          onClose={() => setShowChatPanel(false)}
-        />
+        <Suspense fallback={null}>
+          <Participants
+            isOpen={showParticipants}
+            onClose={() => setShowParticipants(false)}
+          />
+        </Suspense>
+        <Suspense fallback={null}>
+          <ChatPanel
+            isOpen={showChatPanel}
+            onClose={() => setShowChatPanel(false)}
+          />
+        </Suspense>
+
+
+        <AnimatePresence>
+          {showShortcuts && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="absolute bottom-28 left-10 w-64 bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-6 z-50 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-5">
+                <div className="p-2 bg-white/5 rounded-xl text-white/40">
+                  <Keyboard size={16} />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Keybinds</span>
+              </div>
+              <div className="space-y-4">
+                {[
+                  { key: "m", action: "Toggle Audio" },
+                  { key: "v", action: "Toggle Video" },
+                  { key: "s", action: "Screen Share" },
+                  { key: "e", action: "Leave Room" },
+                ].map((item) => (
+                  <div key={item.key} className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-zinc-400">{item.action}</span>
+                    <kbd className="px-2 py-1 bg-white/10 border border-white/5 rounded-md text-[10px] font-mono font-bold text-white/80 min-w-[24px] text-center">
+                      {item.key}
+                    </kbd>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <div className="flex-1 flex overflow-hidden justify-center items-center">
-          {/* Main Video View */}
           {isP2P ? (
             <div className="w-full h-full p-4 lg:p-6 max-w-[1920px] mx-auto">
-              <P2PMeetingPage remoteScreenStream={screenStream} />
+              <Suspense fallback={<Loader />}>
+                <P2PMeetingPage remoteScreenStream={screenStream} />
+              </Suspense>
             </div>
           ) : isSFU ? (
             <motion.div
@@ -91,7 +131,9 @@ function RoomPage() {
               animate={{ scale: 1, opacity: 1 }}
               className="w-full h-full p-4 lg:p-6 max-w-[1920px] mx-auto"
             >
-              <SFUMeetingPage screenStream={screenStream} />
+              <Suspense fallback={<Loader />}>
+                <SFUMeetingPage screenStream={screenStream} />
+              </Suspense>
             </motion.div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-4 text-white/20">
@@ -105,7 +147,6 @@ function RoomPage() {
           )}
         </div>
 
-        {/* Local Preview Pill */}
         <div
           className={`absolute right-10 transition-all duration-700 ${isControlsVisible ? "bottom-24" : "bottom-10"
             } h-44 w-72 rounded-[2rem] overflow-hidden border border-white/10 bg-neutral-900 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-40`}
@@ -122,7 +163,6 @@ function RoomPage() {
             exit={{ y: 100, opacity: 0 }}
             className="h-20 bg-zinc-900/40 backdrop-blur-3xl border-t border-white/5 flex items-center justify-between px-10 z-30"
           >
-            {/* Header Info */}
             <div className="flex items-center gap-6 w-1/3">
               <div className="flex flex-col">
                 <span className="text-lg font-bold tabular-nums text-white/90 leading-none">
@@ -164,9 +204,18 @@ function RoomPage() {
                   {copied ? <Check size={14} strokeWidth={3} /> : <Copy size={14} />}
                 </motion.button>
               </div>
+
+              {/* HELP / SHORTCUT ICON */}
+              <motion.button
+                whileHover={{ scale: 1, backgroundColor: "rgba(255,255,255,0.1)" }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setShowShortcuts(!showShortcuts)}
+                className={`p-3 rounded-xl border border-white/5 transition-colors ${showShortcuts ? "bg-white/10 text-white" : "text-zinc-500"}`}
+              >
+                <HelpCircle size={18} strokeWidth={2.5} />
+              </motion.button>
             </div>
 
-            {/* CONTROLS */}
             <div className="flex justify-center flex-1">
               <Controls
                 showParticipants={showParticipants}

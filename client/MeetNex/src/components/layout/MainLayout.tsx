@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { Sidebar, SidebarBody } from "./Sidebar";
 import {
   IconVideo,
@@ -8,7 +8,7 @@ import {
   IconUser,
   IconUsers,
   IconChevronDown,
-  IconSettings // Added for the settings button
+  IconSettings 
 } from "@tabler/icons-react";
 import MainLayoutText from "./MainLayoutText";
 import { Link } from "react-router-dom"; 
@@ -17,7 +17,7 @@ import { Modal } from "../ui/Modal";
 import RoomID from "@/pages/meeting/RoomID";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "../ui/Logo";
-import Setting from "./Settings";
+const Setting = lazy(() => import("./Settings"));
 
 const BrandLogo = () => (
     <Logo/>
@@ -83,10 +83,12 @@ export default function MainLayout() {
     <div className="flex h-screen w-full bg-[#F9F9FB] overflow-hidden relative antialiased">
       
       {/* SASSY SETTINGS MODAL */}
-      <Setting 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-      />
+      <Suspense fallback={null}>
+        <Setting 
+          isOpen={isSettingsOpen} 
+          onClose={() => setIsSettingsOpen(false)} 
+        />
+      </Suspense>
 
       {/* SELECTION OVERLAY */}
       <AnimatePresence>
@@ -107,7 +109,10 @@ export default function MainLayout() {
                 ].map((opt) => (
                   <Link
                     key={opt.mode}
-                    to={`/room/${generatedRoomId}?type=${opt.mode}`}
+                    /** * MODIFIED: We now route to /join (Greenroom) first.
+                     * We pass the architecture type as a query param.
+                    */
+                    to={`/join/${generatedRoomId}?type=${opt.mode}`}
                     onClick={() => setPendingRoute(null)}
                     className="flex flex-col items-start gap-4 p-8 bg-white border border-zinc-200 rounded-[32px] hover:border-zinc-900 transition-all group shadow-sm hover:shadow-xl no-underline"
                   >
@@ -139,7 +144,6 @@ export default function MainLayout() {
                 const isActive = selected === link.label;
                 const isDropdownOpen = meetingDropdownOpen === link.label;
 
-                // Handle Standard Links (Lumi AI)
                 if (link.to) {
                   return (
                     <Link
@@ -160,13 +164,12 @@ export default function MainLayout() {
                   );
                 }
 
-                // Handle Action Buttons (Meetings Dropdown or Settings)
                 return (
                   <div key={idx} className="w-full">
                     <button
                       onClick={() => {
                         if (link.onClick) {
-                            link.onClick(); // Triggers Settings Modal
+                            link.onClick();
                         } else if (link.dropdown) {
                             setMeetingDropdownOpen(isDropdownOpen ? null : link.label);
                         }
@@ -237,7 +240,6 @@ export default function MainLayout() {
         </div>
       </main>
 
-      {/* SCHEDULE MODAL */}
       <Modal 
         isOpen={isScheduleModalOpen} 
         onClose={() => setIsScheduleModalOpen(false)} 

@@ -12,8 +12,6 @@ import {
   toggleMic,
   toggleCamera,
   stopAllMedia,
-  isCameraEnabled,
-  isMicEnabled,
 } from "@/mediaControl/useMediaControls";
 
 import {
@@ -24,6 +22,17 @@ import {
 
 import { mergeStream } from "@/mediaControl/mergeStream";
 import { useScreen } from "@/mediaControl/useScreen";
+
+/* ===================== PERSISTENCE HELPERS ===================== */
+
+const getStoredValue = (key: string, defaultValue: any) => {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : defaultValue;
+  } catch (error) {
+    return defaultValue;
+  }
+};
 
 /* ===================== TYPES ===================== */
 
@@ -54,6 +63,7 @@ interface MediaContextType {
   handleToggleScreenShare: () => Promise<void>;
   handleLeaveCall: () => void;
   updateSelectedDevice: (type: keyof SelectedDevices, id: string) => void;
+  saveConfig: () => Promise<void>; // Added for your Settings Modal UI
 }
 
 const MediaContext = createContext<MediaContextType | null>(null);
@@ -76,11 +86,19 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
     cam: [],
   });
 
-  const [selectedDevices, setSelectedDevices] = useState<SelectedDevices>({
-    micId: "",
-    camId: "",
-    speakerId: "",
+  // 1. PERSISTENCE: Initialize selectedDevices from LocalStorage
+  const [selectedDevices, setSelectedDevices] = useState<SelectedDevices>(() => {
+    return getStoredValue("meet_selected_devices", {
+      micId: "",
+      camId: "",
+      speakerId: "",
+    });
   });
+
+  // 2. AUTO-SAVE: Write to LocalStorage whenever devices change
+  useEffect(() => {
+    localStorage.setItem("meet_selected_devices", JSON.stringify(selectedDevices));
+  }, [selectedDevices]);
 
   /* ===================== DEVICE ENUMERATION ===================== */
 
@@ -110,44 +128,39 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
   /* ===================== START MEDIA ===================== */
 
   const startStream = useCallback(async () => {
-  if (isLeavingRef.current) return;
+    if (isLeavingRef.current) return;
 
-  try {
-    // 1. If user has camera off, we set video to false so it doesn't turn on the light
-    // 2. If user has mic muted, we still usually request audio but keep the track disabled 
-    // OR we set audio to true and disable it after.
-    
-    const constraints: MediaStreamConstraints = {
-      audio: selectedDevices.micId ? { deviceId: { exact: selectedDevices.micId } } : true,
-      // RESPECT CURRENT STATE: If camera is off, don't request a video track
-      video: isCamOff ? false : (selectedDevices.camId ? { deviceId: { exact: selectedDevices.camId } } : true),
-    };
+    try {
+      // Use the current state of selectedDevices (which might have come from Storage)
+      const constraints: MediaStreamConstraints = {
+        audio: selectedDevices.micId ? { deviceId: { exact: selectedDevices.micId } } : true,
+        video: isCamOff ? false : (selectedDevices.camId ? { deviceId: { exact: selectedDevices.camId } } : true),
+      };
 
-    const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-    
-    if (isLeavingRef.current) {
-        newStream.getTracks().forEach(t => t.stop());
-        return;
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+      
+      if (isLeavingRef.current) {
+          newStream.getTracks().forEach(t => t.stop());
+          return;
+      }
+
+      if (isMuted) {
+        newStream.getAudioTracks().forEach(track => track.enabled = false);
+      }
+
+      if (streamRef.current) {
+        stopAllMedia(streamRef.current);
+      }
+
+      streamRef.current = newStream;
+      setStream(newStream);
+      
+      await refreshDevice();
+      setIsMediaActive(true);
+    } catch (err) {
+      console.error("Failed to get media:", err);
     }
-
-    // If mic was supposed to be muted, mute the new track immediately
-    if (isMuted) {
-      newStream.getAudioTracks().forEach(track => track.enabled = false);
-    }
-
-    if (streamRef.current) {
-      stopAllMedia(streamRef.current);
-    }
-
-    streamRef.current = newStream;
-    setStream(newStream);
-    
-    await refreshDevice();
-    setIsMediaActive(true);
-  } catch (err) {
-    console.error("Failed to get media:", err);
-  }
-}, [selectedDevices.micId, selectedDevices.camId, isCamOff, isMuted, refreshDevice]);
+  }, [selectedDevices.micId, selectedDevices.camId, isCamOff, isMuted, refreshDevice]);
 
   useEffect(() => {
     if (isMediaActive && !isLeavingRef.current) {
@@ -192,13 +205,16 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
     setSelectedDevices((prev) => ({ ...prev, [type]: id }));
   };
 
-  /* ===================== LEAVE CALL (WITH HISTORY LOCK) ===================== */
+  const saveConfig = async () => {
+    return new Promise<void>((resolve) => setTimeout(resolve, 800));
+  };
+
+  /* ===================== LEAVE CALL ===================== */
 
   const handleLeaveCall = useCallback(() => {
     isLeavingRef.current = true;
     setIsMediaActive(false);
 
-    // 1. Stop Hardware
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => {
         track.stop(); 
@@ -213,9 +229,6 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
 
     setStream(null);
     setScreenStream(null);
-
-    // 2. History Manipulation: 
-    // Overwrites the current history entry so 'Forward' button becomes useless.
     window.history.replaceState(null, "", "/");
 
     setTimeout(() => {
@@ -226,10 +239,7 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
   /* ===================== BROWSER NAVIGATION SAFETY ===================== */
 
   useEffect(() => {
-    const handleGlobalExit = () => {
-      handleLeaveCall();
-    };
-
+    const handleGlobalExit = () => handleLeaveCall();
     window.addEventListener("popstate", handleGlobalExit);
     window.addEventListener("beforeunload", handleGlobalExit);
 
@@ -255,6 +265,7 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
     handleToggleScreenShare,
     handleLeaveCall,
     updateSelectedDevice,
+    saveConfig,
   }), [
     isMuted, 
     isCamOff, 

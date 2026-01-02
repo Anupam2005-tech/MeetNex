@@ -1,13 +1,17 @@
 import { FaMicrophone, FaVideo as FaVideoIcon, FaShieldAlt, FaArrowRight } from "react-icons/fa";
 import Dropdown from "../../components/ui/Dropdown";
-import LocalVideo from "@/components/video/LocalVideo";
+import { lazy, Suspense } from "react";
 import AudioToggle from "@/components/ui/buttons/AudioToggle";
 import VideoToggle from "@/components/ui/buttons/VideoToggle";
+import Loader from "@/components/ui/Loader";
 // 1. Import your custom Auth hook
 import { useAppAuth } from "@/context/AuthContext"; 
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { useMedia } from "@/context/MeetingContext";
+
+// Lazy load LocalVideo
+const LocalVideo = lazy(() => import("@/components/video/LocalVideo"));
 
 const JoinMeetingPage = () => {
   const { user, isLoaded } = useAppAuth(); 
@@ -67,7 +71,9 @@ const JoinMeetingPage = () => {
 
           <div className="relative group rounded-[24px] bg-black shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden border-[3px] border-white ring-1 ring-zinc-200">
             <div className="aspect-video w-full">
-              <LocalVideo />
+              <Suspense fallback={<Loader />}>
+                <LocalVideo />
+              </Suspense>
             </div>
 
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 p-1 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">

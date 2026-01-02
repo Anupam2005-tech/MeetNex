@@ -2,16 +2,15 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import Loader from "@/components/ui/Loader";
-import HomeLayout from "@/pages/dashboard/home/HomeLayout"; 
-import NotFound from "@/components/ui/NotFound";
 import { ProtectedRoute } from "./ProtectedRoutes";
+const HomeLayout = lazy(() => import("@/pages/dashboard/home/HomeLayout"));
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage"));
 const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage"));
 const MainLayout = lazy(() => import("@/components/layout/MainLayout"));
-const Settings = lazy(() => import("@/components/layout/Settings"));
-const RoomPage = lazy(() => import("@/pages/meeting/RoomPage"));
 const JoinMeetingPage = lazy(() => import("@/pages/meeting/JoinMeetingPage"));
+const RoomPage = lazy(() => import("@/pages/meeting/RoomPage"));
 const LumiChat = lazy(() => import("@/components/ui/LumiChat"));
+const NotFound = lazy(() => import("@/components/ui/NotFound"));
 
 function Approuter() {
   return (
