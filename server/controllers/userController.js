@@ -13,9 +13,9 @@ const syncUserToDb = async (req, res) => {
             { upsert: true, new: true }
         )
         return res.status(200).json({ message: "User synced!" });
-    } catch (err) {
-        return err
+    } catch(err){
+        console.error("Sync failed:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
     }
-
 }
 module.exports=syncUserToDb
