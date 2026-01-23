@@ -1,6 +1,6 @@
 import { Toaster } from "sonner";
 
-export const ToastProvider = () => {
+export default function ToastProvider() {
   return (
     <Toaster
       position="top-right"

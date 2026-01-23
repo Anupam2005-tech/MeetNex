@@ -1,21 +1,57 @@
-const mongoose=require("mongoose")
+const mongoose = require("mongoose");
 
-const MeetingSchema=new mongoose.Schema({
-    roomId:{
-        type:String,
-        required:true,
-        unique:true
+const MeetingSchema = new mongoose.Schema(
+  {
+    roomId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
     },
-    hostId:{
-        type:String,
-        required:true,
+
+    hostId: {
+      type: String,
+      required: true,
+      index: true,
     },
-    participantsId:[{
-        type:String,
 
-    }]
-},{timestamps:true})
+    type: {
+      type: String,
+      enum: ["P2P", "SFU"],
+      required: true,
+    },
 
-const MeetingModel=mongoose.models.Meeting||mongoose.model("Meeting",MeetingSchema)
+    visibility: {
+      type: String,
+      enum: ["PRIVATE", "OPEN"],
+      default: "PRIVATE",
+    },
 
-module.exports=MeetingModel
+    allowedUsers: [
+      {
+        type: String,
+      },
+    ],
+
+    maxParticipants: {
+      type: Number,
+      default: 2, // P2P default
+    },
+
+    participants: [
+      {
+        type: String,
+      },
+    ],
+
+    status: {
+      type: String,
+      enum: ["CREATED", "LIVE", "ENDED"],
+      default: "CREATED",
+    },
+  },
+  { timestamps: true }
+);
+
+module.exports =
+  mongoose.models.Meeting || mongoose.model("Meeting", MeetingSchema);

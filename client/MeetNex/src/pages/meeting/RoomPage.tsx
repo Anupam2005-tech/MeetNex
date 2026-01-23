@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
-import { useSearchParams, useParams } from "react-router-dom";
+import { useSearchParams, useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, Check, Keyboard, HelpCircle } from "lucide-react"; 
 import { useRoomShortcuts } from "@/context/useRoomShortcuts";
 import Controls from "@/components/video/Controls";
 import LocalVideo from "@/components/video/LocalVideo";
 import Loader from "@/components/ui/Loader";
+import { useSocket } from "@/context/SocketContext";
 const Participants = lazy(() => import("@/pages/meeting/Participants"));
 const ChatPanel = lazy(() => import("@/components/chat/ChatPanel"));
 const P2PMeetingPage = lazy(() => import("./P2PMeetingPage"));
@@ -16,17 +17,42 @@ import { useMedia } from "@/context/MeetingContext";
 function RoomPage() {
   const [searchParams] = useSearchParams();
   const { roomId } = useParams();
+  const navigate = useNavigate();
+  const { joinRoom, isConnected } = useSocket();
   const isP2P = searchParams.get("type") === "p2p";
   const isSFU = searchParams.get("type") === "sfu";
   useRoomShortcuts()
 
   const meetingCode = roomId || "CONNECTING...";
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   const {
     stream,
     screenStream,
     startStream, 
   } = useMedia();
+
+  // Join room via socket when component mounts and socket is ready
+  useEffect(() => {
+    const joinRoomSocket = async () => {
+      if (isConnected && roomId) {
+        try {
+          await joinRoom(roomId);
+          console.log(`Successfully joined room: ${roomId}`);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Failed to join room';
+          setJoinError(errorMessage);
+          console.error('Failed to join room:', error);
+          // Navigate back to join page after 3 seconds
+          setTimeout(() => {
+            navigate('/home', { replace: true });
+          }, 3000);
+        }
+      }
+    };
+
+    joinRoomSocket();
+  }, [isConnected, roomId, joinRoom, navigate]);
 
   useEffect(() => {
     if (!stream) {
@@ -70,6 +96,17 @@ function RoomPage() {
       className={`h-screen flex flex-col bg-[#050505] text-white transition-colors duration-500 ${!isControlsVisible ? "cursor-none" : ""
         }`}
     >
+      {/* Error Banner */}
+      {joinError && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/20 border border-red-500/50 p-3 text-center text-sm font-semibold"
+        >
+          {joinError} - Redirecting...
+        </motion.div>
+      )}
+
       <div className="relative flex-1 flex overflow-hidden">
         <Suspense fallback={null}>
           <Participants

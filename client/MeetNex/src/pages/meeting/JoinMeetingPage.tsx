@@ -1,14 +1,15 @@
 import { FaMicrophone, FaVideo as FaVideoIcon, FaShieldAlt, FaArrowRight } from "react-icons/fa";
 import Dropdown from "../../components/ui/Dropdown";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useState } from "react";
 import AudioToggle from "@/components/ui/buttons/AudioToggle";
 import VideoToggle from "@/components/ui/buttons/VideoToggle";
 import Loader from "@/components/ui/Loader";
 // 1. Import your custom Auth hook
 import { useAppAuth } from "@/context/AuthContext"; 
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate, useParams } from "react-router-dom"; 
 import { useMedia } from "@/context/MeetingContext";
+import { createMeeting, joinMeeting, ApiError } from "@/utils/api";
 
 // Lazy load LocalVideo
 const LocalVideo = lazy(() => import("@/components/video/LocalVideo"));
@@ -16,6 +17,9 @@ const LocalVideo = lazy(() => import("@/components/video/LocalVideo"));
 const JoinMeetingPage = () => {
   const { user, isLoaded } = useAppAuth(); 
   const navigate = useNavigate();
+  const { roomId } = useParams();
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const {
     isMuted,
@@ -33,9 +37,35 @@ const JoinMeetingPage = () => {
     if (!isMediaActive) startStream();
   }, [startStream, isMediaActive]);
 
-  const handleJoin = () => {
-    const roomId = "meeting-123"; 
-    navigate(`/room/${roomId}?type=sfu`, { replace: true }); 
+  const handleJoin = async () => {
+    setError(null);
+    setIsCreating(true);
+    
+    try {
+      let targetRoomId = roomId;
+      
+      // If no roomId in params, create a new meeting
+      if (!roomId) {
+        const meetingResponse = await createMeeting({
+          type: 'SFU',
+          visibility: 'OPEN',
+        });
+        targetRoomId = meetingResponse.roomId;
+      } else {
+        // If roomId exists, join the meeting via API
+        await joinMeeting({ roomId });
+      }
+      
+      // Navigate to the room
+      navigate(`/room/${targetRoomId}?type=sfu`, { replace: true });
+    } catch (err) {
+      const apiError = err as ApiError;
+      const errorMessage = apiError.message || 'Failed to process meeting. Please try again.';
+      setError(errorMessage);
+      console.error('Meeting operation error:', err);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   // 3. Handle the "Authenticating" state for a premium feel
@@ -116,8 +146,17 @@ const JoinMeetingPage = () => {
         <div className="max-w-sm mx-auto w-full space-y-8">
           <div className="space-y-2">
             <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 leading-tight">Ready to <br/>connect?</h1>
-            <p className="text-sm text-zinc-500 font-medium">Everything is set. Step inside.</p>
+            <p className="text-sm text-zinc-500 font-medium">
+              {roomId ? 'Joining meeting in progress...' : 'Everything is set. Step inside.'}
+            </p>
           </div>
+
+          {/* Error Message Display */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-xs font-semibold text-red-600">{error}</p>
+            </div>
+          )}
 
           {/* 4. Use real user data from AuthContext */}
           <div className="flex items-center gap-3 p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
@@ -140,10 +179,20 @@ const JoinMeetingPage = () => {
 
           <button 
             onClick={handleJoin}
-            className="w-full h-12 bg-zinc-900 hover:bg-black text-white rounded-xl font-semibold text-sm transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-zinc-200"
+            disabled={isCreating}
+            className="w-full h-12 bg-zinc-900 hover:bg-black disabled:bg-zinc-400 text-white rounded-xl font-semibold text-sm transition-all duration-300 active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-zinc-200 disabled:cursor-not-allowed"
           >
-            Join Meeting
-            <FaArrowRight size={10} className="text-emerald-400" />
+            {isCreating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                {roomId ? 'Joining Meeting...' : 'Creating Meeting...'}
+              </>
+            ) : (
+              <>
+                {roomId ? 'Join Meeting' : 'Create & Join'}
+                <FaArrowRight size={10} className="text-emerald-400" />
+              </>
+            )}
           </button>
         </div>
 
