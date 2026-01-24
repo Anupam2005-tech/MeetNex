@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { X, Sparkles, Users } from "lucide-react";
-import ParticipantsChat from "./roomChat/ParticipantsChat"; // We will create this
-import AIChat from "./AI/AIChat"; // We will create this
+import Loader from "../ui/Loader";
+
+// Lazy load chat tabs
+const ParticipantsChat = lazy(() => import("./roomChat/ParticipantsChat"));
+const AIChat = lazy(() => import("./AI/AIChat"));
 
 interface ChatPanelProps {
   isOpen: boolean;
@@ -59,7 +62,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               : "opacity-0 pointer-events-none"
             }`}
         >
-          <ParticipantsChat />
+          <Suspense fallback={<Loader />}>
+            <ParticipantsChat />
+          </Suspense>
         </div>
 
         <div
@@ -68,7 +73,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
               : "opacity-0 pointer-events-none"
             }`}
         >
-          <AIChat />
+          <Suspense fallback={<Loader />}>
+            <AIChat />
+          </Suspense>
         </div>
       </div>
 

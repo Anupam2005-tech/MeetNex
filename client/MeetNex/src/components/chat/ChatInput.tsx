@@ -139,7 +139,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </button>
 
           {showEmoji && (
-  <Suspense fallback={<div>Loading...</div>}>
+  <Suspense fallback={<div className="p-2 text-xs text-gray-400">Loading emojis...</div>}>
     <EmojiPicker theme={Theme.DARK} onEmojiClick={onEmojiClick} />
   </Suspense>
 )}

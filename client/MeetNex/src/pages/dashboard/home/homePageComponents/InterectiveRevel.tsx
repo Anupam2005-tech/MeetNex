@@ -1,8 +1,6 @@
-"use client";
 import { useRef } from "react";
 import { motion, useScroll, useTransform, useSpring, useInView } from "framer-motion";
 
-// --- NEW COMPONENT: Text Reveal Effect ---
 const TextReveal = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-10%" });
@@ -12,7 +10,7 @@ const TextReveal = ({ children, className }: { children: React.ReactNode; classN
       <motion.div
         initial={{ y: "100%" }}
         animate={isInView ? { y: 0 } : { y: "100%" }}
-        transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1] }} // Custom "Architectural" ease
+        transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1] }}
       >
         {children}
       </motion.div>
@@ -34,20 +32,21 @@ const InteractiveRevel = () => {
     restDelta: 0.001,
   });
 
-  const headerOpacity = useTransform(smoothProgress, [0, 0.2], [1, 0]);
-  const headerScale = useTransform(smoothProgress, [0, 0.2], [1, 0.9]);
-  const headerY = useTransform(smoothProgress, [0, 0.2], [0, -50]);
-  const videoY = useTransform(smoothProgress, [0, 0.3], [100, 0]);
-  const videoScale = useTransform(smoothProgress, [0.1, 0.4], [0.8, 1]);
-  const gridY = useTransform(smoothProgress, [0, 1], [0, -100]);
+  // Responsive Transforms
+  const headerOpacity = useTransform(smoothProgress, [0, 0.15], [1, 0]);
+  const headerScale = useTransform(smoothProgress, [0, 0.15], [1, 0.95]);
+  const headerY = useTransform(smoothProgress, [0, 0.2], [0, -30]);
+  const videoY = useTransform(smoothProgress, [0, 0.3], [60, 0]);
+  const videoScale = useTransform(smoothProgress, [0.1, 0.4], [0.9, 1]);
+  const gridY = useTransform(smoothProgress, [0, 1], [0, -50]);
 
   return (
-    <div ref={containerRef} className="relative bg-[#FCFCFC] text-slate-950 selection:bg-indigo-100 selection:text-indigo-900">
+    <div ref={containerRef} className="relative bg-[#FCFCFC] text-slate-950 selection:bg-indigo-100 selection:text-indigo-900 overflow-x-hidden">
       
       {/* 1. ARCHITECTURAL GRID OVERLAY */}
       <motion.div style={{ y: gridY }} className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 opacity-[0.15]" 
-             style={{ backgroundImage: `radial-gradient(#000 1px, transparent 1px)`, backgroundSize: '32px 32px' }} 
+        <div className="absolute inset-0 opacity-[0.1]" 
+             style={{ backgroundImage: `radial-gradient(#000 1px, transparent 1px)`, backgroundSize: '24px 24px md:32px 32px' }} 
         />
         <div className="h-full w-full max-w-7xl mx-auto border-x border-slate-200 border-dashed relative">
             <div className="absolute left-1/3 h-full border-l border-slate-200 border-dashed hidden md:block" />
@@ -55,33 +54,27 @@ const InteractiveRevel = () => {
       </motion.div>
 
       {/* 2. TOP TEXT SECTION */}
-      <section className="relative z-20 h-screen flex items-center border-b border-slate-200 border-dashed overflow-hidden">
-        <div className="max-w-7xl mx-auto grid grid-cols-12 w-full">
+      <section className="relative z-20 min-h-[80vh] md:h-screen flex items-center border-b border-slate-200 border-dashed overflow-hidden">
+        <div className="max-w-7xl mx-auto md:grid md:grid-cols-12 w-full px-6 md:px-0">
           <div className="hidden md:block md:col-span-4 border-r border-slate-200 border-dashed" />
           
-          <div className="col-span-12 md:col-span-8 p-12 md:p-24 md:pl-16">
+          <div className="col-span-12 md:col-span-8 py-20 md:p-24 md:pl-16">
             <motion.div style={{ opacity: headerOpacity, scale: headerScale, y: headerY }}>
-              <div className="flex items-center gap-4 mb-8">
+              <div className="flex items-center gap-4 mb-6 md:mb-8">
                  <div className="relative">
                     <span className="absolute inset-0 bg-indigo-500 blur-sm opacity-40 animate-pulse" />
                     <span className="relative block w-2.5 h-2.5 bg-indigo-600 rounded-full" />
                  </div>
-                 <span className="text-[10px] font-bold tracking-[0.4em] uppercase text-slate-400">Next-Gen Interface</span>
+                 <span className="text-[8px] md:text-[10px] font-bold tracking-[0.3em] md:tracking-[0.4em] uppercase text-slate-400">Next-Gen Interface</span>
               </div>
               
-              {/* APPLIED TEXT REVEAL HERE */}
-              <div className="text-6xl lg:text-[110px] font-bold tracking-tight leading-[0.95] lg:leading-[0.9] mb-12 text-slate-950">
-  {/* Add padding-bottom (pb-4) to create room for the 'g' descender */}
-  <TextReveal className="pb-4 lg:pb-6">
-    Work Together.
-  </TextReveal>
-  
-  <TextReveal className="text-slate-400 opacity-90">
-    Pixel Perfect.
-  </TextReveal>
-</div>
+              <div className="text-5xl sm:text-6xl lg:text-[110px] font-bold tracking-tight leading-[1] md:leading-[0.9] mb-8 md:mb-12 text-slate-950">
+                <TextReveal className="pb-2 md:pb-6">Work Together.</TextReveal>
+                <TextReveal className="text-slate-400 opacity-90 pb-2 md:pb-6">Pixel Perfect.</TextReveal>
+              </div>
+              
               <TextReveal>
-                <p className="max-w-xl text-xl text-slate-500 font-light leading-relaxed">
+                <p className="max-w-xl text-lg md:text-xl text-slate-500 font-light leading-relaxed">
                   Experience a customized virtual environment designed for high-performance 
                   teams. Eliminate friction, prioritize clarity.
                 </p>
@@ -92,11 +85,11 @@ const InteractiveRevel = () => {
       </section>
 
       {/* 3. VIDEO SECTION */}
-      <div className="relative w-full z-10 py-24 md:py-40">
+      <div className="relative w-full z-10 py-12 md:py-40">
         <div className="max-w-7xl mx-auto px-4 md:px-6">
             <motion.div 
               style={{ y: videoY, scale: videoScale }}
-              className="relative aspect-video w-full rounded-3xl overflow-hidden shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] bg-slate-200"
+              className="relative aspect-video w-full rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] bg-slate-200"
             >
               <video src="/waves.mp4" autoPlay muted loop playsInline className="w-full h-full object-cover" />
             </motion.div>
@@ -105,8 +98,9 @@ const InteractiveRevel = () => {
 
       {/* 4. BOTTOM INFO SECTION */}
       <section className="relative z-20 bg-[#FCFCFC] border-t border-slate-200 border-dashed">
-        <div className="max-w-7xl mx-auto grid grid-cols-12">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12">
           
+          {/* Mobile Specs: Hidden on mobile, shown as a simple list if needed or completely desktop-only */}
           <div className="hidden md:block md:col-span-4 border-r border-slate-200 border-dashed pt-24 px-12">
              <div className="sticky top-24">
                 <p className="text-xs font-bold uppercase tracking-[0.3em] text-slate-400 mb-4">The Specs</p>
@@ -127,20 +121,15 @@ const InteractiveRevel = () => {
              </div>
           </div>
 
-          <div className="col-span-12 md:col-span-8 p-12 md:p-24 md:pl-16">
-            <h2 className="text-3xl md:text-5xl tracking-tight leading-[1.1] text-slate-900 mb-20 font-medium max-w-3xl">
-  <TextReveal className="pb-2">
-    Deterministic synchronization
-  </TextReveal>
-  <TextReveal className="text-slate-400 pb-2">
-    across a global mesh.
-  </TextReveal>
-  <TextReveal>
-    Zero-latency signaling for high-stakes teams.
-  </TextReveal>
-</h2>
+          <div className="col-span-12 md:col-span-8 p-6 py-16 md:p-24 md:pl-16">
+            <h2 className="text-3xl md:text-5xl tracking-tight leading-[1.2] md:leading-[1.1] text-slate-900 mb-12 md:mb-20 font-medium max-w-3xl">
+              <TextReveal className="pb-1">Deterministic synchronization</TextReveal>
+              <TextReveal className="text-slate-400 pb-1">across a global mesh.</TextReveal>
+              <TextReveal>Less than 5ms-latency signaling for teams.</TextReveal>
+            </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-slate-200 border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+            {/* Feature Grid: Stacks on mobile */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-slate-200 border border-slate-200 rounded-2xl md:rounded-3xl overflow-hidden shadow-sm">
                 <FeatureItem title="Fluid Customization" desc="Build offices that adapt to your unique team culture." delay={0.1} />
                 <FeatureItem title="Studio Audio" desc="Directional sound mapping makes remote feel like same-room." delay={0.2} />
                 <FeatureItem title="Instant Access" desc="Single-link invitations with secure guest tunneling." delay={0.3} />
@@ -149,7 +138,8 @@ const InteractiveRevel = () => {
           </div>
         </div>
       </section>
-      <div className="h-40 border-t border-slate-200 border-dashed opacity-50" />
+      
+      <div className="h-20 md:h-40 border-t border-slate-200 border-dashed opacity-50" />
     </div>
   );
 };
@@ -160,13 +150,13 @@ const FeatureItem = ({ title, desc, delay }: { title: string; desc: string; dela
     whileInView={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.8, delay }}
     viewport={{ once: true }}
-    className="bg-[#FCFCFC] p-10 hover:bg-slate-50 transition-colors duration-500 group"
+    className="bg-[#FCFCFC] p-8 md:p-10 hover:bg-slate-50 transition-colors duration-500 group"
   >
-    <div className="mb-8 w-10 h-px bg-indigo-600 group-hover:w-20 transition-all duration-700" />
+    <div className="mb-6 md:mb-8 w-10 h-px bg-indigo-600 group-hover:w-20 transition-all duration-700" />
     <TextReveal>
-      <h3 className="font-bold text-slate-950 mb-4 tracking-tight uppercase text-xs">{title}</h3>
+      <h3 className="font-bold text-slate-950 mb-3 md:mb-4 tracking-tight uppercase text-[10px] md:text-xs">{title}</h3>
     </TextReveal>
-    <p className="text-base text-slate-500 leading-relaxed font-light">{desc}</p>
+    <p className="text-sm md:text-base text-slate-500 leading-relaxed font-light">{desc}</p>
   </motion.div>
 );
 

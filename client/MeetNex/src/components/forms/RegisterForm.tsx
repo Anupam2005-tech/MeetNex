@@ -1,18 +1,16 @@
 import { SignUp } from "@clerk/clerk-react";
-import { useLocation } from "react-router-dom";
-import Loader from "../ui/Loader";
+import { useSearchParams } from "react-router-dom";
 
 const RegisterForm = () => {
-  const location = useLocation();
-  const redirectUrl = location.state?.from?.pathname || "/home";
+  const [searchParams] = useSearchParams();
+  const redirectUrl = searchParams.get("redirect_url") || "/home";
 
   return (
     <SignUp 
       routing="path" 
       path="/register"
-      signInUrl="/login" 
+      signInUrl={`/login?redirect_url=${encodeURIComponent(redirectUrl)}`}
       forceRedirectUrl={redirectUrl} 
-      fallback={<Loader/>}
     />
   );
 };

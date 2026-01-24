@@ -1,10 +1,24 @@
+version: '3.8'
+
 services:
-  client:
-    build:
+  backend:
+    build: ./server
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    volumes:
+      - ./server:/app
+      - /app/node_modules 
+
+  frontend:
+    build: 
       context: .
       dockerfile: client/Dockerfile.client
     ports:
       - "5173:5173"
+    depends_on:
+      - backend
     volumes:
       - ./client/MeetNex:/app
       - /app/node_modules

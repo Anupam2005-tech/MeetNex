@@ -1,18 +1,33 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import LoginForm from "@/components/forms/LoginForm";
 import { useAuth } from "@clerk/clerk-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import Logo from "@/components/ui/Logo";
-import {Zap, Shield } from "lucide-react";
+import { Zap, Shield } from "lucide-react";
+import { showToast } from "@/components/ui/Toast";
 
 function LoginPage() {
   const { isSignedIn, isLoaded } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const toastFired = useRef(false); 
 
   useEffect(() => {
     if (isLoaded && isSignedIn) navigate("/home");
-  }, [isLoaded, isSignedIn, navigate]);
+
+    if (isLoaded && !isSignedIn && !toastFired.current) {
+      const reason = searchParams.get("reason");
+      
+      if (reason === "auth") {
+        showToast.error(
+          "ACCESS RESTRICTED", 
+          "Identity verification required for secure meeting links."
+        );
+        toastFired.current = true;
+      }
+    }
+  }, [isLoaded, isSignedIn, navigate, searchParams]);
 
   if (!isLoaded) return null;
 
@@ -24,7 +39,6 @@ function LoginPage() {
         {/* ================= LEFT: THE FEATURE BLADE (38%) ================= */}
         <div className="lg:w-[38%] bg-[#0a0a0b] p-12 lg:p-16 flex flex-col justify-between relative overflow-hidden z-10">
           
-          {/* Top-Right Glow to soften the "Black" side */}
           <div className="absolute top-[-10%] right-[-10%] w-80 h-80 bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none" />
 
           <div className="relative z-20">
@@ -64,24 +78,20 @@ function LoginPage() {
           <div className="relative z-20 flex items-center gap-4">
              <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
              <p className="text-[10px] text-zinc-700 uppercase tracking-widest font-bold">
-               SignIn 
+               Gateway Secured
              </p>
           </div>
         </div>
 
-        {/* ================= THE BLENDING PARTITION (The "Creative Fix") ================= */}
-        {/* This creates a skewed divider that bleeds the black into the white */}
+        {/* ================= THE BLENDING PARTITION ================= */}
         <div className="hidden lg:block absolute left-[38%] top-0 bottom-0 w-32 z-20 pointer-events-none">
-            {/* Skewed Shape */}
             <div className="absolute inset-0 bg-[#0a0a0b] origin-top-left -skew-x-[4deg] transform translate-x-[-50%]" />
-            {/* Soft Shadow Bleed */}
             <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0b] to-transparent opacity-20 blur-xl translate-x-[-20%]" />
         </div>
 
         {/* ================= RIGHT: THE ACTION SPACE (62%) ================= */}
         <div className="flex-1 bg-white relative flex flex-col items-center justify-center p-8 lg:p-20 z-10">
           
-          {/* Ambient center glow to pop the white form */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-500/[0.03] blur-[150px] rounded-full pointer-events-none" />
 
           <motion.div 
@@ -92,29 +102,26 @@ function LoginPage() {
           >
         
             <div className="relative group">
-              {/* Subtle card-like hover for the form area */}
               <div className="absolute -inset-6 bg-zinc-50/50 rounded-[40px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 -z-10" />
               <LoginForm />
             </div>
 
             <div className="mt-12 flex items-center justify-between border-t border-zinc-100 pt-8">
-              <span className="text-xs text-zinc-400">New to the protocol?</span>
-           
+              <span className="text-xs text-zinc-400">Secure Node Login</span>
+              <span className="text-[10px] font-black text-zinc-300 tracking-[0.2em] uppercase">MeetNeX Systems v.25</span>
             </div>
           </motion.div>
 
-          {/* Vertical Branding */}
           <div className="absolute top-16 right-16 hidden xl:block overflow-hidden h-32">
             <motion.div 
               animate={{ y: [0, -20, 0] }}
               transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
               className="text-[9px] font-bold text-zinc-200 uppercase tracking-[0.6em] [writing-mode:vertical-lr]"
             >
-              MeetNeX Systems • 2025
+              LUMI ENCRYPTED LINK
             </motion.div>
           </div>
         </div>
-
       </div>
     </div>
   );

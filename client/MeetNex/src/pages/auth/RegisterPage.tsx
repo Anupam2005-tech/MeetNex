@@ -5,8 +5,8 @@ import { CheckCircle2, ShieldCheck, Zap } from "lucide-react";
 
 function RegisterPage() {
   const features = [
-    { icon: <Zap size={18} />, text: "Zero-latency global infrastructure" },
-    { icon: <ShieldCheck size={18} />, text: "End-to-end military grade encryption" },
+    { icon: <Zap size={18} />, text: "<5ms latency infrastructure" },
+    { icon: <ShieldCheck size={18} />, text: "End-to-end encryption" },
     { icon: <CheckCircle2 size={18} />, text: "Seamless multi-platform synchronization" },
   ];
 
@@ -36,7 +36,7 @@ function RegisterPage() {
             transition={{ delay: 0.2 }}
           >
             <span className="inline-block px-3 py-1 rounded-full bg-zinc-100 text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-6">
-              Platform Access v2.0
+              Platform Access v1.0
             </span>
             <h1 className="text-6xl font-semibold tracking-tight text-zinc-900 leading-[0.95]">
               Design your <br />
