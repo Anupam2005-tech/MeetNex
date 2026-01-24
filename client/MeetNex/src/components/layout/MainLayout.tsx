@@ -45,11 +45,8 @@ export default function MainLayout() {
   const [selected, setSelected] = useState<string | null>("Home");
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  
-  // NEW: State for Settings Modal
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  
-  const [generatedRoomId, setGeneratedRoomId] = useState("");
+  const [selectedMeetingType, setSelectedMeetingType] = useState<"p2p" | "sfu" | null>(null);
 
   const links = [
     {
@@ -61,7 +58,6 @@ export default function MainLayout() {
       ],
     },
     { label: "Lumi AI", to: "/lumi", icon: <IconMessage2Bolt className="h-5 w-5" /> },
-    // INTEGRATED SETTINGS BUTTON (Placed below Lumi)
     { 
       label: "Settings", 
       icon: <IconSettings className="h-5 w-5" />, 
@@ -71,8 +67,6 @@ export default function MainLayout() {
 
   const handleSubLinkClick = (subLabel: string) => {
     if (subLabel === "Instant Meeting") {
-      const newId = Math.random().toString(36).substring(2, 10).toUpperCase();
-      setGeneratedRoomId(newId);
       setPendingRoute("instant");
     } else if (subLabel === "Schedule") {
       setIsScheduleModalOpen(true);
@@ -82,7 +76,6 @@ export default function MainLayout() {
   return (
     <div className="flex h-screen w-full bg-[#F9F9FB] overflow-hidden relative antialiased">
       
-      {/* SASSY SETTINGS MODAL */}
       <Suspense fallback={null}>
         <Setting 
           isOpen={isSettingsOpen} 
@@ -94,26 +87,41 @@ export default function MainLayout() {
       <AnimatePresence>
         {pendingRoute === "instant" && (
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }}
             className="absolute inset-0 z-[100] flex items-center justify-center bg-white/80 backdrop-blur-xl"
           >
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center max-w-2xl w-full px-8"
             >
               <h2 className="text-4xl font-bold text-zinc-900 mb-10 tracking-tighter">Select Architecture</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                 {[
-                  { mode: "p2p", label: "Direct 1:1", desc: "Peer-to-Peer Mesh", icon: <IconUser size={24}/> },
-                  { mode: "sfu", label: "Group Call", desc: "Global SFU Relay", icon: <IconUsers size={24}/> }
+                  { 
+                    mode: "p2p", 
+                    label: "Direct 1:1", 
+                    desc: "Peer-to-Peer Mesh", 
+                    icon: <IconUser size={24}/>,
+                    visibility: "PRIVATE" // ✅ P2P is PRIVATE
+                  },
+                  { 
+                    mode: "sfu", 
+                    label: "Group Call", 
+                    desc: "Global SFU Relay", 
+                    icon: <IconUsers size={24}/>,
+                    visibility: "OPEN" // ✅ SFU is OPEN
+                  }
                 ].map((opt) => (
                   <Link
                     key={opt.mode}
-                    /** * MODIFIED: We now route to /join (Greenroom) first.
-                     * We pass the architecture type as a query param.
-                    */
-                    to={`/join/${generatedRoomId}?type=${opt.mode}`}
-                    onClick={() => setPendingRoute(null)}
+                    to={`/join?type=${opt.mode}&visibility=${opt.visibility}`}
+                    onClick={() => {
+                      setPendingRoute(null);
+                      setSelectedMeetingType(opt.mode as "p2p" | "sfu");
+                    }}
                     className="flex flex-col items-start gap-4 p-8 bg-white border border-zinc-200 rounded-[32px] hover:border-zinc-900 transition-all group shadow-sm hover:shadow-xl no-underline"
                   >
                     <div className="p-3 rounded-xl bg-zinc-50 group-hover:bg-zinc-900 group-hover:text-white transition-colors">
@@ -122,11 +130,18 @@ export default function MainLayout() {
                     <div className="text-left">
                         <div className="font-bold text-xl text-zinc-900">{opt.label}</div>
                         <div className="text-xs text-zinc-400 uppercase tracking-widest mt-1">{opt.desc}</div>
+                        {/* ✅ Show visibility status */}
+                        <div className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2 bg-blue-50 px-2 py-1 rounded">
+                          {opt.visibility === "PRIVATE" ? "🔒 Private" : "🌐 Open"}
+                        </div>
                     </div>
                   </Link>
                 ))}
               </div>
-              <button onClick={() => setPendingRoute(null)} className="mt-12 text-zinc-400 hover:text-zinc-900 font-bold uppercase text-[10px] tracking-widest transition-colors border-b border-zinc-200 pb-1">
+              <button 
+                onClick={() => setPendingRoute(null)} 
+                className="mt-12 text-zinc-400 hover:text-zinc-900 font-bold uppercase text-[10px] tracking-widest transition-colors border-b border-zinc-200 pb-1"
+              >
                 Back to Dashboard
               </button>
             </motion.div>
@@ -193,7 +208,9 @@ export default function MainLayout() {
                     <AnimatePresence>
                       {link.dropdown && isDropdownOpen && (
                         <motion.div 
-                          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                          initial={{ opacity: 0, height: 0 }} 
+                          animate={{ opacity: 1, height: "auto" }} 
+                          exit={{ opacity: 0, height: 0 }}
                           className="ml-6 mt-1.5 flex flex-col gap-1 border-l-2 border-zinc-100 pl-4 py-1"
                         >
                           {link.dropdown.map((sub, i) => (

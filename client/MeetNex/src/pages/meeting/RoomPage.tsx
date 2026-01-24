@@ -18,13 +18,15 @@ function RoomPage() {
   const [searchParams] = useSearchParams();
   const { roomId } = useParams();
   const navigate = useNavigate();
-  const { joinRoom, isConnected } = useSocket();
+  const { socket, joinRoom, isConnected } = useSocket();
   const isP2P = searchParams.get("type") === "p2p";
   const isSFU = searchParams.get("type") === "sfu";
   useRoomShortcuts()
 
   const meetingCode = roomId || "CONNECTING...";
   const [joinError, setJoinError] = useState<string | null>(null);
+  const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null); // ✅ ADD THIS
+  const [remoteScreenStream, setRemoteScreenStream] = useState<MediaStream | null>(null); // ✅ ADD THIS
 
   const {
     stream,
@@ -53,6 +55,38 @@ function RoomPage() {
 
     joinRoomSocket();
   }, [isConnected, roomId, joinRoom, navigate]);
+
+  // ✅ ADD: Listen for remote stream events from socket
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on("remoteStream", (stream: MediaStream) => {
+      console.log("Remote stream received:", stream);
+      setRemoteStream(stream);
+    });
+
+    socket.on("remoteScreenShare", (stream: MediaStream) => {
+      console.log("Remote screen share received:", stream);
+      setRemoteScreenStream(stream);
+    });
+
+    socket.on("remoteStreamRemoved", () => {
+      console.log("Remote stream removed");
+      setRemoteStream(null);
+    });
+
+    socket.on("remoteScreenShareRemoved", () => {
+      console.log("Remote screen share removed");
+      setRemoteScreenStream(null);
+    });
+
+    return () => {
+      socket.off("remoteStream");
+      socket.off("remoteScreenShare");
+      socket.off("remoteStreamRemoved");
+      socket.off("remoteScreenShareRemoved");
+    };
+  }, [socket]);
 
   useEffect(() => {
     if (!stream) {
@@ -159,7 +193,8 @@ function RoomPage() {
           {isP2P ? (
             <div className="w-full h-full p-4 lg:p-6 max-w-[1920px] mx-auto">
               <Suspense fallback={<Loader />}>
-                <P2PMeetingPage remoteScreenStream={screenStream} />
+                {/* ✅ PASS REMOTE STREAMS */}
+                <P2PMeetingPage />
               </Suspense>
             </div>
           ) : isSFU ? (
@@ -169,7 +204,10 @@ function RoomPage() {
               className="w-full h-full p-4 lg:p-6 max-w-[1920px] mx-auto"
             >
               <Suspense fallback={<Loader />}>
-                <SFUMeetingPage screenStream={screenStream} />
+                {/* ✅ PASS REMOTE STREAMS */}
+                <SFUMeetingPage 
+                  screenStream={remoteScreenStream || screenStream} 
+                />
               </Suspense>
             </motion.div>
           ) : (

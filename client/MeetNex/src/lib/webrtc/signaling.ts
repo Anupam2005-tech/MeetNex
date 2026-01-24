@@ -1,3 +1,4 @@
+// utils/webrtc/setSignaling.ts
 import { Socket } from "socket.io-client";
 
 type OfferPayload = {
@@ -20,64 +21,34 @@ export function setSignaling(
   pc: RTCPeerConnection,
   peerId: string
 ) {
-  /* ================= OFFER ================= */
+
   socket.on("offer", async ({ from, offer }: OfferPayload) => {
-    try {
-      // Prevent offer collision (glare)
-      if (pc.signalingState !== "stable") {
-        console.warn("Offer ignored, signaling not stable");
-        return;
-      }
+    console.log("Received offer from", from);
 
-      await pc.setRemoteDescription(
-        new RTCSessionDescription(offer)
-      );
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
 
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
 
-      socket.emit("answer", {
-        to: from,
-        answer: pc.localDescription,
-      });
-    } catch (err) {
-      console.error("Error handling offer", err);
-    }
+    socket.emit("answer", {
+      to: from,
+      answer: pc.localDescription,
+    });
   });
 
-  /* ================= ANSWER ================= */
   socket.on("answer", async ({ answer }: AnswerPayload) => {
-    try {
-      if (pc.signalingState !== "have-local-offer") return;
+    console.log("Received answer");
 
-      await pc.setRemoteDescription(
-        new RTCSessionDescription(answer)
-      );
-    } catch (err) {
-      console.error("Error handling answer", err);
-    }
+    await pc.setRemoteDescription(new RTCSessionDescription(answer));
   });
 
-  /* ================= ICE ================= */
   socket.on("ice-candidate", async ({ candidate }: IcePayload) => {
-    try {
-      if (!candidate) return;
-
-      // If remote description not set yet, queue candidate
-      if (!pc.remoteDescription) {
-        await waitForRemoteDescription(pc);
-      }
-
-      await pc.addIceCandidate(
-        new RTCIceCandidate(candidate)
-      );
-    } catch (err) {
-      console.error("ICE candidate error", err);
-    }
+    if (!candidate) return;
+    console.log("Received ICE candidate");
+    await pc.addIceCandidate(new RTCIceCandidate(candidate));
   });
 
-  /* ================= SEND ICE ================= */
-  pc.onicecandidate = event => {
+  pc.onicecandidate = (event) => {
     if (event.candidate) {
       socket.emit("ice-candidate", {
         to: peerId,
@@ -86,25 +57,10 @@ export function setSignaling(
     }
   };
 
-  /* ================= CLEANUP ================= */
-  const cleanup = () => {
+  return () => {
     socket.off("offer");
     socket.off("answer");
     socket.off("ice-candidate");
     pc.onicecandidate = null;
   };
-
-  return cleanup;
-}
-
-/* ================= UTILS ================= */
-
-function waitForRemoteDescription(pc: RTCPeerConnection): Promise<void> {
-  return new Promise(resolve => {
-    const check = () => {
-      if (pc.remoteDescription) resolve();
-      else setTimeout(check, 50);
-    };
-    check();
-  });
 }

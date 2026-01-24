@@ -26,6 +26,7 @@ function setupSignaling(socket, io, rooms) {
       candidate,
     });
   });
+  
 }
 
 module.exports = { setupSignaling };

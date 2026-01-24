@@ -1,9 +1,20 @@
-const { Router } = require('express');
-const syncUserToDb = require('../webhooks/clerk');
-const verifyUser = require('../middleware/auth'); 
+// routes/userAuthRoutes.js
+const express = require("express");
+const requireAuth = require("../middleware/auth");
 
-const clerkRouter = Router();
+const router = express.Router();
 
-clerkRouter.get("/sync", verifyUser, syncUserToDb);
+router.get("/sync", requireAuth, async (req, res) => {
+  try {
+    const userId = req.user.sub;
 
-module.exports = clerkRouter;
+    res.json({
+      message: "User synced",
+      userId,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Sync failed" });
+  }
+});
+
+module.exports = router;

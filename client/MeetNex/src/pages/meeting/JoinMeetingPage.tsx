@@ -7,9 +7,9 @@ import Loader from "@/components/ui/Loader";
 // 1. Import your custom Auth hook
 import { useAppAuth } from "@/context/AuthContext"; 
 import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom"; 
+import { useNavigate, useParams, useSearchParams } from "react-router-dom"; 
 import { useMedia } from "@/context/MeetingContext";
-import { createMeeting, joinMeeting, ApiError } from "@/utils/api";
+import { createMeeting, joinMeeting, type ApiError } from "@/utils/api";
 
 // Lazy load LocalVideo
 const LocalVideo = lazy(() => import("@/components/video/LocalVideo"));
@@ -18,6 +18,9 @@ const JoinMeetingPage = () => {
   const { user, isLoaded } = useAppAuth(); 
   const navigate = useNavigate();
   const { roomId } = useParams();
+  const [searchParams] = useSearchParams();
+  const meetingType: 'P2P' | 'SFU' = (searchParams.get('type')?.toUpperCase() as 'P2P' | 'SFU') || 'P2P';
+  const visibility = searchParams.get('visibility')?.toUpperCase() || (meetingType === 'P2P' ? 'PRIVATE' : 'OPEN'); // ✅ Read visibility
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,20 +47,17 @@ const JoinMeetingPage = () => {
     try {
       let targetRoomId = roomId;
       
-      // If no roomId in params, create a new meeting
       if (!roomId) {
         const meetingResponse = await createMeeting({
-          type: 'SFU',
-          visibility: 'OPEN',
+          type: meetingType,
+          visibility: visibility as 'OPEN' | 'PRIVATE', // ✅ Use visibility from query params
         });
         targetRoomId = meetingResponse.roomId;
       } else {
-        // If roomId exists, join the meeting via API
         await joinMeeting({ roomId });
       }
       
-      // Navigate to the room
-      navigate(`/room/${targetRoomId}?type=sfu`, { replace: true });
+      navigate(`/room/${targetRoomId}?type=${meetingType.toLowerCase()}&visibility=${visibility}`, { replace: true });
     } catch (err) {
       const apiError = err as ApiError;
       const errorMessage = apiError.message || 'Failed to process meeting. Please try again.';

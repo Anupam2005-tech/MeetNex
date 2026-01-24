@@ -1,135 +1,118 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { createSocket, getSocket, disconnectSocket } from '@/lib/socket';
-import { useAppAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { io, Socket } from "socket.io-client";
+import { useAppAuth } from "./AuthContext";
 
 interface SocketContextType {
-  socket: any | null;
+  socket: Socket | null;
   isConnected: boolean;
   joinRoom: (roomId: string) => Promise<void>;
-  leaveRoom: () => void;
-  sendMessage: (message: string) => void;
-  isTyping: (roomId: string, isTyping: boolean) => void;
+  leaveRoom: () => Promise<void>;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const { getToken, isSignedIn } = useAppAuth();
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const socketRef = useRef<any>(null);
+  const { getToken, isSignedIn } = useAppAuth();
 
-  // Initialize socket connection on auth
   useEffect(() => {
-    if (!isSignedIn) {
-      if (socketRef.current) {
-        disconnectSocket();
-        socketRef.current = null;
-      }
-      return;
-    }
+    if (!isSignedIn) return;
 
-    const initializeSocket = async () => {
+    const initSocket = async () => {
       try {
         const token = await getToken();
-        if (token) {
-          const newSocket = await createSocket(token);
-          socketRef.current = newSocket;
+        
+        const newSocket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000", {
+          auth: {
+            token,
+          },
+          reconnection: true,
+          reconnectionDelay: 1000,
+          reconnectionDelayMax: 5000,
+          reconnectionAttempts: 5,
+        });
 
-          newSocket.on('connect', () => {
-            console.log('Socket connected:', newSocket.id);
-            setIsConnected(true);
-          });
+        newSocket.on("connect", () => {
+          console.log("Socket connected");
+          setIsConnected(true);
+        });
 
-          newSocket.on('disconnect', () => {
-            console.log('Socket disconnected');
-            setIsConnected(false);
-          });
+        newSocket.on("disconnect", () => {
+          console.log("Socket disconnected");
+          setIsConnected(false);
+        });
 
-          newSocket.on('connect_error', (error: any) => {
-            console.error('Socket connection error:', error);
-            setIsConnected(false);
-          });
+        newSocket.on("error", (error) => {
+          console.error("Socket error:", error);
+        });
 
-          newSocket.on('error', (error: any) => {
-            console.error('Socket error:', error);
-          });
-        }
+        setSocket(newSocket);
       } catch (error) {
-        console.error('Failed to initialize socket:', error);
-        setIsConnected(false);
+        console.error("Failed to initialize socket:", error);
       }
     };
 
-    initializeSocket();
+    initSocket();
 
     return () => {
-      if (socketRef.current) {
-        disconnectSocket();
-        socketRef.current = null;
+      if (socket) {
+        socket.disconnect();
       }
     };
   }, [isSignedIn, getToken]);
 
-  const joinRoom = useCallback(async (roomId: string): Promise<void> => {
-    const currentSocket = socketRef.current;
-    if (currentSocket?.connected) {
+  const joinRoom = useCallback(
+    async (roomId: string) => {
       return new Promise<void>((resolve, reject) => {
-        currentSocket.emit('join-room', { roomId }, (response: any) => {
-          if (response?.error) {
-            reject(new Error(response.error));
+        if (!socket) {
+          reject(new Error("Socket not connected"));
+          return;
+        }
+
+        socket.emit("joinRoom", { roomId }, (error: any) => {
+          if (error) {
+            reject(new Error(error));
           } else {
+            console.log(`Joined room: ${roomId}`);
             resolve();
           }
         });
-
-        setTimeout(() => reject(new Error('Join room timeout')), 10000);
       });
-    } else {
-      return Promise.reject(new Error('Socket not connected'));
-    }
-  }, []);
+    },
+    [socket]
+  );
 
-  const leaveRoom = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.emit('leave-room');
-    }
-  }, []);
+  const leaveRoom = useCallback(async () => {
+    return new Promise<void>((resolve, reject) => {
+      if (!socket) {
+        reject(new Error("Socket not connected"));
+        return;
+      }
 
-  const sendMessage = useCallback((message: string) => {
-    if (socketRef.current) {
-      socketRef.current.emit('chat:send', { message });
-    }
-  }, []);
+      socket.emit("leaveRoom", (error: any) => {
+        if (error) {
+          reject(new Error(error));
+        } else {
+          console.log("Left room");
+          resolve();
+        }
+      });
+    });
+  }, [socket]);
 
-  const isTyping = useCallback((roomId: string, typing: boolean) => {
-    if (socketRef.current) {
-      socketRef.current.emit(
-        typing ? 'chat:typing:start' : 'chat:typing:stop',
-        { roomId }
-      );
-    }
-  }, []);
-
-  const value: SocketContextType = {
-    socket: socketRef.current,
+  const value = {
+    socket,
     isConnected,
     joinRoom,
     leaveRoom,
-    sendMessage,
-    isTyping,
   };
 
-  return (
-    <SocketContext.Provider value={value}>
-      {children}
-    </SocketContext.Provider>
-  );
+  return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;
 };
 
 export const useSocket = () => {
-  const context = useContext(SocketContext);
-  if (!context) {
-    throw new Error('useSocket must be used within SocketProvider');
-  }
-  return context;
+  const ctx = useContext(SocketContext);
+  if (!ctx) throw new Error("useSocket must be used within SocketProvider");
+  return ctx;
 };

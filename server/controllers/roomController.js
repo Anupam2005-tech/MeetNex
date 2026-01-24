@@ -1,3 +1,4 @@
+// controllers/roomController.js
 const MeetingModel = require("../models/meetingModal");
 
 const generateRoomId = () => {
@@ -11,7 +12,8 @@ const createRoom = async (req, res) => {
     const hostId = req.authUserId;
     let { type, visibility, allowedUsers } = req.body;
 
-    // Defaults
+    console.log("Create room request - hostId:", hostId, "body:", req.body);
+
     type = type === "SFU" ? "SFU" : "P2P";
     visibility = visibility === "OPEN" ? "OPEN" : "PRIVATE";
     allowedUsers = Array.isArray(allowedUsers) ? allowedUsers : [];
@@ -23,14 +25,13 @@ const createRoom = async (req, res) => {
       hostId,
       type,
       visibility,
-      allowedUsers:
-        visibility === "PRIVATE"
-          ? [...new Set([hostId, ...allowedUsers])]
-          : [],
+      allowedUsers: visibility === "PRIVATE" ? [...new Set([hostId, ...allowedUsers])] : [],
       maxParticipants: type === "P2P" ? 2 : 50,
       participants: [hostId],
       status: "CREATED",
     });
+
+    console.log("Meeting created successfully:", meeting.roomId);
 
     return res.status(201).json({
       message: "Meeting created",
@@ -49,29 +50,25 @@ const joinRoom = async (req, res) => {
     const userId = req.authUserId;
     const { roomId } = req.body;
 
-    if (!roomId) {
-      return res.status(400).json({ message: "roomId required" });
-    }
+    console.log("Join request - userId:", userId, "roomId:", roomId);
+
+    if (!roomId) return res.status(400).json({ message: "roomId required" });
 
     const meeting = await MeetingModel.findOne({ roomId });
+    console.log("Database search result:", meeting ? "Found" : "Not found");
+
     if (!meeting) {
+      const allRooms = await MeetingModel.find({});
+      console.log("All rooms in DB:", allRooms.map(r => r.roomId));
       return res.status(404).json({ message: "Room not found" });
     }
 
-    //  Ended meeting
-    if (meeting.status === "ENDED") {
-      return res.status(403).json({ message: "Meeting has ended" });
-    }
+    if (meeting.status === "ENDED") return res.status(403).json({ message: "Meeting has ended" });
 
-    //  Private access
-    if (
-      meeting.visibility === "PRIVATE" &&
-      !meeting.allowedUsers.includes(userId)
-    ) {
+    if (meeting.visibility === "PRIVATE" && !meeting.allowedUsers.includes(userId)) {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    //  Already joined
     if (meeting.participants.includes(userId)) {
       return res.status(200).json({
         message: "Already joined",
@@ -80,18 +77,13 @@ const joinRoom = async (req, res) => {
       });
     }
 
-    //  Capacity check
     if (meeting.participants.length >= meeting.maxParticipants) {
       return res.status(403).json({ message: "Meeting is full" });
     }
 
-    // ✅Join
     meeting.participants.push(userId);
 
-    //  Status update
-    if (meeting.participants.length >= 2) {
-      meeting.status = "LIVE";
-    }
+    if (meeting.participants.length >= 2) meeting.status = "LIVE";
 
     await meeting.save();
 
@@ -106,4 +98,5 @@ const joinRoom = async (req, res) => {
   }
 };
 
-module.exports = { createRoom ,joinRoom};
+module.exports = { createRoom, joinRoom };
+ 

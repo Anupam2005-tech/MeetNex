@@ -1,23 +1,26 @@
-const express = require("express");
-const cors = require("cors");
-const { clerkMiddleware } = require("@clerk/express");
-const dotenv = require("dotenv");
-dotenv.config();
+// middleware/auth.js
+const { verifyToken } = require("@clerk/backend");
 
-const corsOption = {
-  origin: process.env.FRONTEND_URL,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+const requireAuth = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
 
-const configureMiddleware = (app) => {
-  if (!app || typeof app.use !== 'function') {
-    throw new Error('Invalid app object passed to configureMiddleware');
+    if (!authHeader) {
+      return res.status(401).json({ message: "No token" });
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+
+    const payload = await verifyToken(token, {
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
+
+    req.user = payload;
+    next();
+  } catch (err) {
+    console.error("Verify user error:", err.message);
+    res.status(401).json({ message: "Unauthorized" });
   }
-  app.use(cors(corsOption));
-  app.use(express.json());
-  app.use(clerkMiddleware());
 };
 
-module.exports = configureMiddleware;
+module.exports = requireAuth;

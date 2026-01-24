@@ -33,6 +33,7 @@ function Approuter() {
           <Route path="/home" element={<ProtectedRoute><MainLayout /></ProtectedRoute>} />
 
           {/* MEETING FLOW */}
+          <Route path="/join" element={<ProtectedRoute><JoinMeetingPage /></ProtectedRoute>} />
           <Route path="/join/:roomId" element={<ProtectedRoute><JoinMeetingPage /></ProtectedRoute>} />
           <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
 
