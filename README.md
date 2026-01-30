@@ -498,7 +498,7 @@ FRONTEND_URL=http://localhost:5173
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/meetnex
 # OR for MongoDB Atlas:
-# MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/meetnex
+# MONGODB_URI=your_atlas_uri
 
 # Clerk
 CLERK_SECRET_KEY=your_clerk_secret_key
