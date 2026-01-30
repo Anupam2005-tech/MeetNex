@@ -13,7 +13,7 @@ const LocalVideo = () => {
 
     if (stream && !isCamOff) {
       videoRef.current.srcObject = stream;
-      videoRef.current.play().catch((err) => console.log("Video play error:", err));
+      videoRef.current.play().catch(() => {});
     } else {
       videoRef.current.srcObject = null;
     }

@@ -8,24 +8,12 @@ import React, {
   useContext,
 } from "react";
 
-import {
-  toggleMic,
-  toggleCamera,
-  stopAllMedia,
-  isCameraEnabled,
-  isMicEnabled,
-} from "@/mediaControl/useMediaControls";
-
-import {
-  getExternalDevices,
-  onDeviceChanges,
-  type MediaDeviceOption,
-} from "@/mediaControl/useExternalCount";
-
-import { mergeStream } from "@/mediaControl/mergeStream";
-import { useScreen } from "@/mediaControl/useScreen";
-
 /* ===================== TYPES ===================== */
+
+export interface MediaDeviceOption {
+  deviceId: string;
+  label: string;
+}
 
 interface DeviceLists {
   mics: MediaDeviceOption[];
@@ -44,16 +32,17 @@ interface MediaContextType {
   isCamOff: boolean;
   isMediaActive: boolean;
   stream: MediaStream | null;
-  screenStream: MediaStream | null;
   selectedDevice: SelectedDevices;
   deviceList: DeviceLists;
 
   startStream: () => Promise<void>;
   handleToggleMic: () => Promise<void>;
   handleToggleCam: () => Promise<void>;
-  handleToggleScreenShare: () => Promise<void>;
+  handleToggleScreenShare: () => Promise<void>; // Added
   handleLeaveCall: () => void;
   updateSelectedDevice: (type: keyof SelectedDevices, id: string) => void;
+  saveConfig: () => Promise<void>;
+  isScreenSharing: boolean; // Added
 }
 
 const MediaContext = createContext<MediaContextType | null>(null);
@@ -62,13 +51,24 @@ const MediaContext = createContext<MediaContextType | null>(null);
 
 export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
   const streamRef = useRef<MediaStream | null>(null);
-  const isLeavingRef = useRef(false); 
-  
+  const isLeavingRef = useRef(false);
+  const screenTrackRef = useRef<MediaStreamTrack | null>(null); // Added
+
   const [isMediaActive, setIsMediaActive] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false); // Added
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [screenStream, setScreenStream] = useState<MediaStream | null>(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isCamOff, setIsCameraOff] = useState(false);
+  
+  const getStoredValue = (key: string, defaultValue: any) => {
+    try {
+      const saved = localStorage.getItem(key);
+      return saved ? JSON.parse(saved) : defaultValue;
+    } catch {
+      return defaultValue;
+    }
+  };
+
+  const [isMuted, setIsMuted] = useState(() => getStoredValue("meet_is_muted", false));
+  const [isCamOff, setIsCameraOff] = useState(() => getStoredValue("meet_is_cam_off", false));
 
   const [deviceList, setDeviceList] = useState<DeviceLists>({
     mics: [],
@@ -76,197 +76,254 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
     cam: [],
   });
 
-  const [selectedDevices, setSelectedDevices] = useState<SelectedDevices>({
-    micId: "",
-    camId: "",
-    speakerId: "",
-  });
+  const [selectedDevices, setSelectedDevices] = useState<SelectedDevices>(() =>
+    getStoredValue("meet_selected_devices", {
+      micId: "",
+      camId: "",
+      speakerId: "",
+    })
+  );
+
+  /* ===================== PERSISTENCE ===================== */
+
+  useEffect(() => {
+    localStorage.setItem("meet_selected_devices", JSON.stringify(selectedDevices));
+  }, [selectedDevices]);
+
+  useEffect(() => {
+    localStorage.setItem("meet_is_muted", JSON.stringify(isMuted));
+  }, [isMuted]);
+
+  useEffect(() => {
+    localStorage.setItem("meet_is_cam_off", JSON.stringify(isCamOff));
+  }, [isCamOff]);
 
   /* ===================== DEVICE ENUMERATION ===================== */
 
   const refreshDevice = useCallback(async () => {
-    const devices = await getExternalDevices();
-    setDeviceList({
-      mics: devices.mics,
-      cam: devices.cameras,
-      speakers: devices.speakers,
-    });
+    try {
+      // Ensure permissions first
+      // await navigator.mediaDevices.getUserMedia({ audio: true, video: true }); 
+      
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      
+      const mics = devices.filter(d => d.kind === 'audioinput').map(d => ({ deviceId: d.deviceId, label: d.label || 'Microphone' }));
+      const speakers = devices.filter(d => d.kind === 'audiooutput').map(d => ({ deviceId: d.deviceId, label: d.label || 'Speaker' }));
+      const cameras = devices.filter(d => d.kind === 'videoinput').map(d => ({ deviceId: d.deviceId, label: d.label || 'Camera' }));
 
-    setSelectedDevices((prev) => ({
-      camId: prev.camId || devices.cameras[0]?.deviceId || "",
-      speakerId: prev.speakerId || devices.speakers[0]?.deviceId || "",
-      micId: prev.micId || devices.mics[0]?.deviceId || "",
-    }));
+      setDeviceList({ mics, speakers, cam: cameras });
+
+      setSelectedDevices((prev) => ({
+        micId: prev.micId || mics[0]?.deviceId || "",
+        camId: prev.camId || cameras[0]?.deviceId || "",
+        speakerId: prev.speakerId || speakers[0]?.deviceId || "",
+      }));
+    } catch (e) {
+      // console.error("Device enumeration failed", e);
+    }
   }, []);
 
   useEffect(() => {
     refreshDevice();
-    const removeListener = onDeviceChanges(refreshDevice);
-    return () => {
-      if (typeof removeListener === "function") removeListener();
-    };
+    navigator.mediaDevices.addEventListener('devicechange', refreshDevice);
+    return () => navigator.mediaDevices.removeEventListener('devicechange', refreshDevice);
   }, [refreshDevice]);
 
   /* ===================== START MEDIA ===================== */
 
+  const stopAllMedia = (mediaStream: MediaStream) => {
+    mediaStream.getTracks().forEach((track) => {
+      track.stop();
+    });
+  };
+
   const startStream = useCallback(async () => {
-  if (isLeavingRef.current) return;
+    if (isLeavingRef.current) return;
 
-  try {
-    // 1. If user has camera off, we set video to false so it doesn't turn on the light
-    // 2. If user has mic muted, we still usually request audio but keep the track disabled 
-    // OR we set audio to true and disable it after.
-    
-    const constraints: MediaStreamConstraints = {
-      audio: selectedDevices.micId ? { deviceId: { exact: selectedDevices.micId } } : true,
-      // RESPECT CURRENT STATE: If camera is off, don't request a video track
-      video: isCamOff ? false : (selectedDevices.camId ? { deviceId: { exact: selectedDevices.camId } } : true),
-    };
+    try {
+      let constraints: MediaStreamConstraints = {
+        audio: selectedDevices.micId ? { deviceId: { ideal: selectedDevices.micId } } : true,
+        video: !isCamOff ? (selectedDevices.camId ? { deviceId: { ideal: selectedDevices.camId }, width: { ideal: 1280 }, height: { ideal: 720 } } : { width: { ideal: 1280 }, height: { ideal: 720 } }) : false,
+      };
 
-    const newStream = await navigator.mediaDevices.getUserMedia(constraints);
-    
-    if (isLeavingRef.current) {
-        newStream.getTracks().forEach(t => t.stop());
-        return;
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Apply mute state
+      newStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+
+      if (streamRef.current) stopAllMedia(streamRef.current);
+
+      streamRef.current = newStream;
+      setStream(newStream);
+      setIsMediaActive(true);
+    } catch (err) {
+      // console.error("❌ Failed to get media:", err);
     }
-
-    // If mic was supposed to be muted, mute the new track immediately
-    if (isMuted) {
-      newStream.getAudioTracks().forEach(track => track.enabled = false);
-    }
-
-    if (streamRef.current) {
-      stopAllMedia(streamRef.current);
-    }
-
-    streamRef.current = newStream;
-    setStream(newStream);
-    
-    await refreshDevice();
-    setIsMediaActive(true);
-  } catch (err) {
-    console.error("Failed to get media:", err);
-  }
-}, [selectedDevices.micId, selectedDevices.camId, isCamOff, isMuted, refreshDevice]);
+  }, [selectedDevices, isCamOff, isMuted]);
 
   useEffect(() => {
-    if (isMediaActive && !isLeavingRef.current) {
-      startStream();
-    }
+    if (isMediaActive) startStream();
   }, [selectedDevices.micId, selectedDevices.camId]);
 
   /* ===================== ACTIONS ===================== */
 
   const handleToggleMic = async () => {
     if (!streamRef.current) return;
-    const enabled = toggleMic(streamRef.current);
-    setIsMuted(!enabled);
+    const audioTrack = streamRef.current.getAudioTracks()[0];
+    if (audioTrack) {
+      audioTrack.enabled = !audioTrack.enabled;
+      setIsMuted(!audioTrack.enabled);
+    } else {
+      // If stream has no audio track (due to constraints), restart with audio
+       if (isMuted) { // attempting to unmute
+          setIsMuted(false);
+          startStream();
+       } else {
+          setIsMuted(true); 
+       }
+    }
   };
 
   const handleToggleCam = async () => {
-    if (!streamRef.current) return;
-    const enabled = await toggleCamera(streamRef.current);
-    setIsCameraOff(!enabled);
+    // Toggling off -> Stop video track/re-request
+    // Toggling on -> Request video
+    if (isCamOff) {
+        setIsCameraOff(false);
+        // Will auto-trigger useEffect to startStream
+        // Note: We depend on startStream to pick up the new isCamOff state
+        // and re-request gum with video: true
+    } else {
+        setIsCameraOff(true);
+        if (streamRef.current) {
+           streamRef.current.getVideoTracks().forEach(t => t.stop());
+           // Force update stream state
+           const newStream = new MediaStream(streamRef.current.getAudioTracks());
+           setStream(newStream);
+           streamRef.current = newStream;
+        }
+    }
   };
-
-  const handleToggleScreenShare = useCallback(async () => {
-    if (screenStream) {
-      stopAllMedia(screenStream);
-      setScreenStream(null);
-      return;
-    }
-    try {
-      const screen = await useScreen(() => setScreenStream(null));
-      if (streamRef.current) {
-        const merged = await mergeStream(screen, streamRef.current);
-        setScreenStream(merged);
-      } else {
-        setScreenStream(screen);
-      }
-    } catch (err) {
-      console.warn("Screen share error", err);
-    }
-  }, [screenStream]);
 
   const updateSelectedDevice = (type: keyof SelectedDevices, id: string) => {
     setSelectedDevices((prev) => ({ ...prev, [type]: id }));
   };
 
-  /* ===================== LEAVE CALL (WITH HISTORY LOCK) ===================== */
+  const saveConfig = async () => new Promise<void>((r) => setTimeout(r, 500));
+
+  /* ===================== SCREEN SHARE ===================== */
+
+  const stopScreenShare = useCallback(() => {
+    if (screenTrackRef.current) {
+        screenTrackRef.current.stop();
+        screenTrackRef.current = null;
+    }
+    setIsScreenSharing(false);
+    
+    // Revert to camera if it was on, or just stop video
+    if (streamRef.current) {
+        // If we were using camera before, we should try to restore it
+        // Or if we just want to return to "camera state" (which might be off)
+        
+        // Simplest approach: Restart stream to respect isCamOff / isMuted state
+        // This will pick up the correct video device or no video
+        startStream(); 
+    }
+  }, [startStream]);
+
+  const handleToggleScreenShare = async () => {
+    if (isScreenSharing) {
+        stopScreenShare();
+    } else {
+        try {
+            const displayStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            const screenTrack = displayStream.getVideoTracks()[0];
+            
+            screenTrackRef.current = screenTrack;
+            setIsScreenSharing(true);
+
+            // Handle user clicking "Stop sharing" validation bar
+            screenTrack.onended = () => {
+                stopScreenShare();
+            };
+
+            if (streamRef.current) {
+                // Replace video track in current stream
+                const videoTracks = streamRef.current.getVideoTracks();
+                videoTracks.forEach(t => {
+                    t.stop(); // Stop camera track temporarily
+                    streamRef.current?.removeTrack(t);
+                });
+                streamRef.current.addTrack(screenTrack);
+                
+                // Force update to notify consumers
+                setStream(new MediaStream(streamRef.current.getTracks()));
+            } else {
+                // If no stream exists, create one with screen track
+                // (and audio if needed, though usually you'd want audio too)
+                 // For now, let's assume we want to mix with audio if mic is on
+                 // But simply:
+                 const newStream = new MediaStream([screenTrack]);
+                 streamRef.current = newStream;
+                 setStream(newStream);
+                 setIsMediaActive(true);
+            }
+
+        } catch (err) {
+            // console.error("Error starting screen share:", err);
+        }
+    }
+  };
+
+
+  /* ===================== LEAVE CALL ===================== */
 
   const handleLeaveCall = useCallback(() => {
     isLeavingRef.current = true;
-    setIsMediaActive(false);
-
-    // 1. Stop Hardware
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => {
-        track.stop(); 
-        track.enabled = false;
-      });
-      streamRef.current = null;
+    if (screenTrackRef.current) {
+        screenTrackRef.current.stop();
+        screenTrackRef.current = null;
     }
+    setIsScreenSharing(false);
 
-    if (screenStream) {
-      screenStream.getTracks().forEach((track) => track.stop());
-    }
-
+    if (streamRef.current) stopAllMedia(streamRef.current);
+    streamRef.current = null;
     setStream(null);
-    setScreenStream(null);
-
-    // 2. History Manipulation: 
-    // Overwrites the current history entry so 'Forward' button becomes useless.
+    setIsMediaActive(false);
+    
+    // Cleanup navigation or state if needed
     window.history.replaceState(null, "", "/");
+    setTimeout(() => (isLeavingRef.current = false), 500);
+  }, []);
 
-    setTimeout(() => {
-      isLeavingRef.current = false;
-    }, 1000);
-  }, [screenStream]);
-
-  /* ===================== BROWSER NAVIGATION SAFETY ===================== */
+  /* ===================== SAFETY ===================== */
 
   useEffect(() => {
-    const handleGlobalExit = () => {
-      handleLeaveCall();
-    };
-
-    window.addEventListener("popstate", handleGlobalExit);
-    window.addEventListener("beforeunload", handleGlobalExit);
-
-    return () => {
-      window.removeEventListener("popstate", handleGlobalExit);
-      window.removeEventListener("beforeunload", handleGlobalExit);
-    };
+    const exit = () => handleLeaveCall();
+    window.addEventListener("beforeunload", exit);
+    return () => window.removeEventListener("beforeunload", exit);
   }, [handleLeaveCall]);
 
   /* ===================== MEMO ===================== */
 
-  const value = useMemo(() => ({
-    isMuted,
-    isCamOff,
-    isMediaActive,
-    stream,
-    screenStream,
-    selectedDevice: selectedDevices,
-    deviceList,
-    startStream,
-    handleToggleMic,
-    handleToggleCam,
-    handleToggleScreenShare,
-    handleLeaveCall,
-    updateSelectedDevice,
-  }), [
-    isMuted, 
-    isCamOff, 
-    isMediaActive, 
-    stream, 
-    screenStream, 
-    selectedDevices, 
-    deviceList, 
-    startStream, 
-    handleToggleScreenShare, 
-    handleLeaveCall
-  ]);
+  const value = useMemo(
+    () => ({
+      isMuted,
+      isCamOff,
+      isMediaActive,
+      stream,
+      selectedDevice: selectedDevices,
+      deviceList,
+      startStream,
+      handleToggleMic,
+      handleToggleCam,
+      handleToggleScreenShare, // Added
+      handleLeaveCall,
+      updateSelectedDevice,
+      saveConfig,
+      isScreenSharing, // Added
+    }),
+    [isMuted, isCamOff, isMediaActive, stream, selectedDevices, deviceList, isScreenSharing]
+  );
 
   return <MediaContext.Provider value={value}>{children}</MediaContext.Provider>;
 };

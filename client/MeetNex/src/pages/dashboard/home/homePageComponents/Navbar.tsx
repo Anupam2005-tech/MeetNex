@@ -74,25 +74,33 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* MOBILE MENU */}
+      {/* MOBILE MENU - LinkedIn Style Horizontal Bar */}
       {open && (
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[90%] lg:hidden bg-black/95 border border-white/10 rounded-2xl p-4 space-y-3 shadow-2xl">
-          <Link to={gitPage} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}>
-            <button className="flex items-center justify-center gap-1.5 rounded-full border border-white/20 w-full py-2 text-xs font-semibold text-white">
-              <Github size={14} />
-              Star Us
-            </button>
-          </Link>
+        <div className="absolute top-16 left-0 w-full bg-black/95 border-b border-white/10 p-4 shadow-2xl lg:hidden">
+          <div className="flex items-center justify-around gap-4 px-2">
+            
+            <Link to={gitPage} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="flex flex-col items-center gap-1">
+              <div className="h-10 w-10 rounded-full border border-white/20 bg-white/5 flex items-center justify-center text-white">
+                <Github size={20} />
+              </div>
+              <span className="text-[10px] font-medium text-zinc-400">Star Us</span>
+            </Link>
 
-          <Link to="/login" onClick={() => setOpen(false)} className="block text-center">
-            <span className="text-xs font-semibold text-white">Sign In</span>
-          </Link>
+            <Link to="/login" onClick={() => setOpen(false)} className="flex flex-col items-center gap-1">
+              <div className="h-10 w-10 rounded-full border border-white/20 bg-white/5 flex items-center justify-center text-white">
+                <span className="text-xs font-bold">IN</span>
+              </div>
+              <span className="text-[10px] font-medium text-zinc-400">Sign In</span>
+            </Link>
 
-          <Link to="/register" onClick={() => setOpen(false)}>
-            <button className="w-full rounded-full bg-white py-2 text-xs font-semibold text-black mt-2">
-              Sign Up
-            </button>
-          </Link>
+            <Link to="/register" onClick={() => setOpen(false)} className="flex flex-col items-center gap-1">
+               <div className="h-10 w-10 rounded-full bg-white flex items-center justify-center text-black">
+                 <span className="text-xs font-bold">UP</span>
+               </div>
+               <span className="text-[10px] font-medium text-zinc-400">Sign Up</span>
+            </Link>
+
+          </div>
         </div>
       )}
     </nav>

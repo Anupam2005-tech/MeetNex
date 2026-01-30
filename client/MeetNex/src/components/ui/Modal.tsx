@@ -9,7 +9,16 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  className?: string;
+  className?: string; // deprecated in favor of classNames.content or kept for compat
+  classNames?: {
+    overlay?: string;
+    content?: string;
+    header?: string;
+    title?: string;
+    closeBtn?: string;
+    body?: string;
+    footer?: string;
+  };
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -19,6 +28,7 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   footer,
   className,
+  classNames = {},
 }) => {
 
   // Close on Escape
@@ -34,24 +44,25 @@ export const Modal: React.FC<ModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      className={cn("fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm", classNames.overlay)}
       onClick={onClose}
     >
       <div
         className={cn(
-          "relative w-full max-w-lg rounded-xl ",
-          className
+          "relative w-full max-w-lg rounded-2xl bg-white shadow-2xl ring-1 ring-black/5",
+          className,
+          classNames.content
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between border-b border-gray-300 p-4">
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <div className={cn("flex items-center justify-between border-b border-gray-100 p-5", classNames.header)}>
+            <h2 className={cn("text-lg font-bold text-gray-900 tracking-tight", classNames.title)}>{title}</h2>
 
             <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-800 transition"
+              className={cn("text-gray-400 hover:text-gray-900 transition-colors p-1 rounded-lg hover:bg-gray-100", classNames.closeBtn)}
             >
               <IconX size={20} />
             </button>
@@ -59,11 +70,11 @@ export const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* Body */}
-        <div className="p-4 text-gray-800">{children}</div>
+        <div className={cn("p-5 text-gray-600 leading-relaxed", classNames.body)}>{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="border-t border-gray-200 p-4 bg-gray-50 rounded-b-xl">
+          <div className={cn("border-t border-gray-100 p-5 bg-gray-50/50 rounded-b-2xl flex items-center gap-3", classNames.footer)}>
             {footer}
           </div>
         )}

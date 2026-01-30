@@ -77,7 +77,7 @@ export default function OriginSection() {
             </motion.h2>
           </div>
 
-          <motion.p
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
@@ -102,7 +102,7 @@ export default function OriginSection() {
 </PointerHighlight>,
             we engineer digital ecosystems that resonate with a{" "}
             <span className="text-indigo-300">global perspective.</span>
-          </motion.p>
+          </motion.div>
 
           {/* SaaS Styled CTA Divider */}
           <div className="flex items-center space-x-6">

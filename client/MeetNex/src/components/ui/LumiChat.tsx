@@ -54,7 +54,7 @@ const LumiChat = () => {
       };
       setMessages((prev) => [...prev, aiMsg]);
     } catch (error) {
-      console.error(error);
+      // console.error(error);
     } finally {
       setIsTyping(false);
     }

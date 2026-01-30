@@ -1,58 +1,6 @@
-// import React, { createContext, useContext, useMemo } from "react";
-// import { useUser, useAuth } from "@clerk/clerk-react";
-
-// interface UserProfile {
-//   id: string;
-//   fullName: string;
-//   firstName: string;
-//   lastName: string;
-//   email: string;
-//   imageUrl: string;
-// }
-
-// interface AuthContextType {
-//   user: UserProfile | null;
-//   isSignedIn: boolean;
-//   isLoaded: boolean;
-//   getToken: () => Promise<string | null>;
-// }
-
-// const AuthContext = createContext<AuthContextType | null>(null);
-
-// export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-//   const { user, isSignedIn, isLoaded } = useUser();
-//   const { getToken } = useAuth();
-
-//   const userProfile = useMemo(() => {
-//     if (!user) return null;
-//     return {
-//       id: user.id,
-//       fullName: user.fullName || "Anonymous",
-//       firstName: user.firstName || "",
-//       lastName: user.lastName || "",
-//       email: user.primaryEmailAddress?.emailAddress || "",
-//       imageUrl: user.imageUrl,
-//     };
-//   }, [user]);
-
-//   const value = useMemo(() => ({
-//     user: userProfile,
-//     isSignedIn: !!isSignedIn,
-//     isLoaded,
-//     getToken,
-//   }), [userProfile, isSignedIn, isLoaded, getToken]);
-
-//   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-// };
-
-// export const useAppAuth = () => {
-//   const ctx = useContext(AuthContext);
-//   if (!ctx) throw new Error("useAppAuth must be used within AuthProvider");
-//   return ctx;
-// };
-
-import React, { useMemo, createContext, useContext } from "react";
+import React, { useMemo, createContext, useContext, useState, useEffect } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
+import * as api from "@/utils/api";
 
 interface UserProfile {
     firstName: string
@@ -75,6 +23,7 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { user, isSignedIn, isLoaded } = useUser();
     const { getToken } = useAuth();
+    const [tokenInitialized, setTokenInitialized] = useState(false);
 
     const userProfile = useMemo(() => {
         if (!user) return null
@@ -87,6 +36,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             email: user.primaryEmailAddress?.emailAddress || ""
         }
     }, [user])
+
+    // Initialize API auth token and sync user when authenticated
+    useEffect(() => {
+        const initializeAuth = async () => {
+            try {
+                if (isSignedIn) {
+                    // Set up the dynamic token provider (Handles Refreshing)
+                    api.setApiTokenProvider(() => getToken());
+
+                    // Initial sync
+                    if (!tokenInitialized) {
+                        const token = await getToken();
+                        if (token) {
+                             api.initializeApiAuth(token); // Legacy support / Fallback
+                             setTokenInitialized(true);
+                             
+                             // Sync user to database
+                             try {
+                                 await api.syncUserToDatabase();
+                             } catch (error) { }
+                        }
+                    }
+                } else if (!isSignedIn && tokenInitialized) {
+                    api.logoutApi();
+                    setTokenInitialized(false);
+                }
+            } catch (error) {
+                // console.error("Auth initialization error:", error);
+            }
+        };
+
+        if (isLoaded) {
+            initializeAuth();
+        }
+    }, [isSignedIn, isLoaded, getToken, tokenInitialized]);
+
     const value = useMemo(() => ({
         user: userProfile,
         isSignedIn: !!isSignedIn,

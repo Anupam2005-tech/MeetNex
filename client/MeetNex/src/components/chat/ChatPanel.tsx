@@ -1,77 +1,111 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { X, Sparkles, Users } from "lucide-react";
-import ParticipantsChat from "./roomChat/ParticipantsChat"; // We will create this
-import AIChat from "./AI/AIChat"; // We will create this
+import Loader from "@/components/ui/Loader"; // Adjust path as needed
+import { cn } from "../../lib/Utils"; // Adjust path as needed
+
+// Lazy load chat tabs
+const ParticipantsChat = lazy(() => import("./roomChat/ParticipantsChat"));
+const AIChat = lazy(() => import("./AI/AIChat"));
 
 interface ChatPanelProps {
-  isOpen: boolean;
+  isOpen: boolean; // Kept for API consistency, though mostly controlled by parent layout now
   onClose: () => void;
 }
 
-const ChatPanel: React.FC<ChatPanelProps> = ({ isOpen, onClose }) => {
+const ChatPanel: React.FC<ChatPanelProps> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState<"participants" | "ai">("participants");
 
   return (
-    <aside
-      className={`fixed top-4 right-4 bottom-4 w-[380px] z-50
-      bg-white/90 backdrop-blur-2xl border border-white/20 shadow-2xl
-      rounded-3xl transform transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-      flex flex-col overflow-hidden
-      ${isOpen ? "translate-x-0 opacity-100" : "translate-x-[120%] opacity-0"}`}
-    >
-      {/* HEADER */}
-      <div className="p-5 pb-3 bg-white/50 border-b border-gray-100">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Messages</h2>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-900 transition-colors">
-            <X size={20} />
+    <aside className="w-full h-full bg-[#FDFCF8] flex flex-col border-l border-stone-200/50 font-sans">
+      
+      {/* ================= HEADER SECTION ================= */}
+      <div className="px-6 pt-6 pb-2 shrink-0 bg-[#FDFCF8] z-20">
+        
+        {/* Title Row */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-5 bg-stone-800 rounded-full" /> {/* Accent Bar */}
+            <h2 className="text-xl font-black text-stone-900 tracking-tight">
+              Lounge
+            </h2>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="group p-2 -mr-2 rounded-full hover:bg-stone-100 transition-colors duration-300"
+          >
+            <X size={20} className="text-stone-400 group-hover:text-stone-900 transition-colors" />
           </button>
         </div>
 
-        {/* TABS CONTROLLER */}
-        <div className="relative flex p-1 bg-gray-100/80 rounded-2xl border border-black/5">
+        {/* Sassy Segmented Control */}
+        <div className="relative flex p-1.5 bg-stone-100 rounded-2xl">
+          {/* Animated Background Slider */}
           <div
-            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm transition-transform duration-300 ease-out ${activeTab === "ai" ? "translate-x-full" : "translate-x-0"
-              }`}
+            className={cn(
+              "absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-white rounded-xl border border-stone-200/50 shadow-sm transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]",
+              activeTab === "ai" ? "translate-x-[100%] ml-1.5" : "translate-x-0"
+            )}
           />
+
+          {/* Tab: Participants */}
           <button
             onClick={() => setActiveTab("participants")}
-            className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold transition-colors ${activeTab === "participants" ? "text-blue-600" : "text-gray-500"
-              }`}
+            className={cn(
+              "relative z-10 flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-colors duration-300",
+              activeTab === "participants" ? "text-stone-900" : "text-stone-400 hover:text-stone-600"
+            )}
           >
-            <Users size={16} /> Participants
+            <Users size={14} strokeWidth={2.5} className={cn("transition-colors", activeTab === "participants" ? "text-blue-500" : "text-stone-400")} />
+            People
           </button>
+
+          {/* Tab: Lumi AI */}
           <button
             onClick={() => setActiveTab("ai")}
-            className={`relative z-10 flex-1 flex items-center justify-center gap-2 py-2 text-xs font-bold transition-colors ${activeTab === "ai" ? "text-indigo-600" : "text-gray-500"
-              }`}
+            className={cn(
+              "relative z-10 flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-colors duration-300",
+              activeTab === "ai" ? "text-stone-900" : "text-stone-400 hover:text-stone-600"
+            )}
           >
-            <Sparkles size={16} /> Lumi
+            <Sparkles size={14} strokeWidth={2.5} className={cn("transition-colors", activeTab === "ai" ? "text-orange-400" : "text-stone-400")} />
+            Lumi
           </button>
         </div>
       </div>
 
-      {/* DYNAMIC CONTENT AREA */}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
+      {/* ================= CONTENT AREA ================= */}
+      <div className="flex-1 relative overflow-hidden">
+        
+        {/* Participants View */}
         <div
-          className={`absolute  inset-0 transition-opacity duration-300 ${activeTab === "participants"
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-            }`}
+          className={cn(
+            "absolute inset-0 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-[#FDFCF8]",
+            activeTab === "participants" 
+              ? "opacity-100 translate-x-0 pointer-events-auto" 
+              : "opacity-0 -translate-x-10 pointer-events-none"
+          )}
         >
-          <ParticipantsChat />
+          <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader /></div>}>
+            <ParticipantsChat />
+          </Suspense>
         </div>
 
+        {/* AI View */}
         <div
-          className={`absolute inset-0 transition-opacity duration-300 ${activeTab === "ai"
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-            }`}
+          className={cn(
+            "absolute inset-0 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] bg-[#FDFCF8]",
+            activeTab === "ai" 
+              ? "opacity-100 translate-x-0 pointer-events-auto" 
+              : "opacity-0 translate-x-10 pointer-events-none"
+          )}
         >
-          <AIChat />
+          <Suspense fallback={<div className="h-full flex items-center justify-center"><Loader /></div>}>
+            <AIChat />
+          </Suspense>
         </div>
       </div>
 
+   
     </aside>
   );
 };
