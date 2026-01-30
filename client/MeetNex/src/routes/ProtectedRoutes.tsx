@@ -4,7 +4,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import Loader from "@/components/ui/Loader";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded } = useAuth();
   const location = useLocation();
 
   if (!isLoaded) {

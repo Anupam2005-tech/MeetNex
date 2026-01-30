@@ -1,14 +1,14 @@
 import { cn } from "../../lib/Utils";
 import { useState, createContext, useContext } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { IconMenu2, IconX } from "@tabler/icons-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { IconMenu2, IconX } from "@tabler/icons-react";
 
 /* ================= TYPES ================= */
 
 interface Links {
   label: string;
-  to?: string; // ✅ react-router path
+  to?: string; 
   icon: React.JSX.Element | React.ReactNode;
 }
 
@@ -80,8 +80,11 @@ export const Sidebar = ({
 export const SidebarBody = (props: React.ComponentProps<typeof motion.div>) => {
   return (
     <>
-      <DesktopSidebar {...props} />
-      <MobileSidebar {...(props as React.ComponentProps<"div">)} />
+      {/* CRITICAL CHANGE: 
+         We force this to be hidden on mobile (hidden) 
+         and flexible on desktop (md:flex) 
+      */}
+      <DesktopSidebar className="hidden md:flex" {...props} />
     </>
   );
 };
@@ -98,7 +101,7 @@ export const DesktopSidebar = ({
   return (
     <motion.div
       className={cn(
-        "h-full px-4 py-4 hidden md:flex md:flex-col bg-white w-screen shrink-0 border-r border-gray-200",
+        "h-full px-4 py-4 hidden lg:flex lg:flex-col bg-white w-screen shrink-0 border-r border-gray-200",
         className
       )}
       animate={{
@@ -125,7 +128,7 @@ export const MobileSidebar = ({
   return (
     <div
       className={cn(
-        "h-10 px-4 py-4 flex flex-row md:hidden items-center justify-between bg-white w-full border-b border-gray-200",
+        "h-10 px-4 py-4 flex flex-row lg:hidden items-center justify-between bg-white w-full border-b border-gray-200",
         className
       )}
       {...props}
@@ -193,7 +196,6 @@ export const SidebarLink = ({
     </>
   );
 
-  // ✅ If route exists → React Router Link
   if (link.to) {
     return (
       <Link
@@ -209,7 +211,6 @@ export const SidebarLink = ({
     );
   }
 
-  // ✅ Non-routing (dropdown parents, actions)
   return (
     <div
       className={cn(

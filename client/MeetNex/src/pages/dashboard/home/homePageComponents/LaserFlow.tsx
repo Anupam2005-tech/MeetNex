@@ -285,9 +285,6 @@ export const LaserFlow: React.FC<Props> = ({
   const baseDprRef = useRef<number>(1);
   const currentDprRef = useRef<number>(1);
   const lastSizeRef = useRef({ width: 0, height: 0, dpr: 0 });
-  const fpsSamplesRef = useRef<number[]>([]);
-  const lastFpsCheckRef = useRef<number>(performance.now());
-  const emaDtRef = useRef<number>(16.7);
   const pausedRef = useRef<boolean>(false);
   const inViewRef = useRef<boolean>(true);
 
@@ -324,7 +321,7 @@ export const LaserFlow: React.FC<Props> = ({
     });
     rendererRef.current = renderer;
 
-    baseDprRef.current = Math.min(dpr ?? (window.devicePixelRatio || 1), 2);
+    baseDprRef.current = isMobile ? 1 : Math.min(dpr ?? (window.devicePixelRatio || 1), 2);
     currentDprRef.current = baseDprRef.current;
 
     renderer.setPixelRatio(currentDprRef.current);

@@ -1,18 +1,19 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { io, Socket } from "socket.io-client";
 import { useAppAuth } from "./AuthContext";
 
 interface SocketContextType {
   socket: Socket | null;
   isConnected: boolean;
-  joinRoom: (roomId: string) => Promise<void>;
+  joinRoom: (roomId: string, userId: string, userProfile?: { fullName: string; imageUrl?: string }) => Promise<void>;
   leaveRoom: () => Promise<void>;
+  sendMessage: (roomId: string, message: string, attachment?: any) => Promise<void>;
 }
 
 const SocketContext = createContext<SocketContextType | null>(null);
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const { getToken, isSignedIn } = useAppAuth();
 
@@ -22,11 +23,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const initSocket = async () => {
       try {
         const token = await getToken();
-        
+
         const newSocket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000", {
-          auth: {
-            token,
-          },
+          auth: { token },
+          transports: ["websocket"],
           reconnection: true,
           reconnectionDelay: 1000,
           reconnectionDelayMax: 5000,
@@ -34,78 +34,75 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
         newSocket.on("connect", () => {
-          console.log("Socket connected");
+// console.log("Socket connected:", newSocket.id);
           setIsConnected(true);
         });
 
         newSocket.on("disconnect", () => {
-          console.log("Socket disconnected");
+// console.log("Socket disconnected");
           setIsConnected(false);
         });
 
-        newSocket.on("error", (error) => {
-          console.error("Socket error:", error);
+        newSocket.on("connect_error", (_err) => {
+// console.error("Socket connection error:", err.message);
         });
 
-        setSocket(newSocket);
-      } catch (error) {
-        console.error("Failed to initialize socket:", error);
+        socketRef.current = newSocket;
+      } catch (err) {
+// console.error("Failed to initialize socket:", err);
       }
     };
 
     initSocket();
 
     return () => {
-      if (socket) {
-        socket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
       }
     };
   }, [isSignedIn, getToken]);
 
   const joinRoom = useCallback(
-    async (roomId: string) => {
+    async (roomId: string, userId: string, userProfile?: { fullName: string; imageUrl?: string }): Promise<void> => {
       return new Promise<void>((resolve, reject) => {
-        if (!socket) {
+        if (!socketRef.current) {
           reject(new Error("Socket not connected"));
           return;
         }
 
-        socket.emit("joinRoom", { roomId }, (error: any) => {
-          if (error) {
-            reject(new Error(error));
-          } else {
-            console.log(`Joined room: ${roomId}`);
+        // ✅ Make sure this matches the server event: "join-room"
+        socketRef.current.emit("join-room", { roomId, userId, userProfile }, (response: any) => {
+          if (response?.success) {
+// console.log(`✅ Joined room: ${roomId}`);
             resolve();
+          } else {
+            reject(new Error("Failed to join room"));
           }
         });
       });
     },
-    [socket]
+    [socketRef.current]
   );
 
   const leaveRoom = useCallback(async () => {
-    return new Promise<void>((resolve, reject) => {
-      if (!socket) {
-        reject(new Error("Socket not connected"));
-        return;
-      }
+    if (!socketRef.current) throw new Error("Socket not connected");
 
-      socket.emit("leaveRoom", (error: any) => {
-        if (error) {
-          reject(new Error(error));
-        } else {
-          console.log("Left room");
-          resolve();
-        }
-      });
-    });
-  }, [socket]);
+    socketRef.current.emit("leave-room");
+// console.log("Left room");
+  }, []);
 
+  const sendMessage = useCallback(async (roomId: string, message: string, attachment?: any) => {
+     if (!socketRef.current) return;
+     socketRef.current.emit("chat:send", { roomId, message, attachment });
+  }, []);
+  
   const value = {
-    socket,
+    socket: socketRef.current,
     isConnected,
     joinRoom,
     leaveRoom,
+    sendMessage,
   };
 
   return <SocketContext.Provider value={value}>{children}</SocketContext.Provider>;

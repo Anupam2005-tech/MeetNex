@@ -18,9 +18,14 @@ const ChatMessageSchema = new mongoose.Schema(
 
     message: {
       type: String,
-      required: true,
       trim: true,
       maxlength: 2000, // production safety
+    },
+
+    attachment: {
+      url: { type: String },
+      name: { type: String },
+      type: { type: String },
     },
   },
   {

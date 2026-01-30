@@ -6,7 +6,10 @@ require("dotenv").config();
 const DbConnection = require("./config/db");
 const clerkRoutes = require("./routes/userAuthRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
+const livekitRoutes = require("./routes/livekit.route");
+const uploadRoutes = require("./routes/uploadRoutes");
 const configureMiddleware = require("./middleware/appMiddleware");
+const path = require("path");
 
 const { setupSocketAuth } = require("./middleware/socketAuth");
 const { initSocketManager } = require("./socket/socketManager");
@@ -27,9 +30,15 @@ app.use((req, res, next) => {
 /* ================= DATABASE ================= */
 DbConnection();
 
+/* ================= STATIC FILES ================= */
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 /* ================= ROUTES ================= */
 app.use("/user", clerkRoutes);
+
 app.use("/meeting", meetingRoutes);
+app.use("/api/livekit", livekitRoutes);
+app.use("/api/upload", uploadRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server running...");
@@ -49,6 +58,7 @@ const io = new Server(server, {
     origin: process.env.FRONTEND_URL,
     methods: ["GET", "POST"],
   },
+  maxHttpBufferSize: 1e7, // 10MB to allow file uploads via socket
 });
 
 /* SOCKET AUTH */

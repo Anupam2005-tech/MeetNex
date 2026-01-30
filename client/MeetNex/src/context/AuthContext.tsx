@@ -1,6 +1,6 @@
 import React, { useMemo, createContext, useContext, useState, useEffect } from "react";
 import { useUser, useAuth } from "@clerk/clerk-react";
-import { initializeApiAuth, syncUserToDatabase, logoutApi } from "@/utils/api";
+import * as api from "@/utils/api";
 
 interface UserProfile {
     firstName: string
@@ -41,26 +41,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const initializeAuth = async () => {
             try {
-                if (isSignedIn && !tokenInitialized) {
-                    const token = await getToken();
-                    if (token) {
-                        initializeApiAuth(token);
-                        setTokenInitialized(true);
-                        
-                        // Sync user to database
-                        try {
-                            await syncUserToDatabase();
-                            console.log("User synced to database");
-                        } catch (error) {
-                            console.error("Failed to sync user:", error);
+                if (isSignedIn) {
+                    // Set up the dynamic token provider (Handles Refreshing)
+                    api.setApiTokenProvider(() => getToken());
+
+                    // Initial sync
+                    if (!tokenInitialized) {
+                        const token = await getToken();
+                        if (token) {
+                             api.initializeApiAuth(token); // Legacy support / Fallback
+                             setTokenInitialized(true);
+                             
+                             // Sync user to database
+                             try {
+                                 await api.syncUserToDatabase();
+                             } catch (error) { }
                         }
                     }
                 } else if (!isSignedIn && tokenInitialized) {
-                    logoutApi();
+                    api.logoutApi();
                     setTokenInitialized(false);
                 }
             } catch (error) {
-                console.error("Auth initialization error:", error);
+                // console.error("Auth initialization error:", error);
             }
         };
 

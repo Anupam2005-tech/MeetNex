@@ -2,21 +2,23 @@ import { useEffect, useRef } from "react";
 import { useMedia } from "@/context/MeetingContext";
 
 export default function ScreenShare() {
-  const { screenStream } = useMedia();
+  const { stream, isScreenSharing } = useMedia();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (!videoRef.current) return;
 
-    if (screenStream) {
-      videoRef.current.srcObject = screenStream;
-      videoRef.current.play().catch(() => {});
+    if (isScreenSharing && stream) {
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch((err) => {
+        console.warn("Failed to play screen share video:", err);
+      });
     } else {
       videoRef.current.srcObject = null;
     }
-  }, [screenStream]);
+  }, [stream, isScreenSharing]);
 
-  if (!screenStream) return null;
+  if (!isScreenSharing) return null;
 
   return (
     <div className="relative w-full h-full rounded-xl overflow-hidden bg-black">

@@ -1,126 +1,108 @@
+// socket/socketManager.js
 const { setupSignaling } = require("./signaling");
 const { setupChatHandlers } = require("./chat");
-const MeetingModel = require("../models/meetingModal");
-
-const rooms = new Map(); 
+const { scheduleRoomCleanup, cancelRoomCleanup } = require("../utils/roomCleanup");
 
 function initSocketManager(io) {
+  const rooms = new Map();
+
   io.on("connection", (socket) => {
-    console.log("Socket connected:", socket.id);
+    console.log(`✅ User connected: ${socket.id}`);
 
-    /* =========================
-       JOIN ROOM
-    ========================= */
-    socket.on("join-room", async ({ roomId }) => {
-      try {
-        const userId = socket.data.userId;
-        if (!roomId || !userId) {
-          socket.emit("error", "Invalid join request");
-          return;
-        }
-
-        // Verify meeting
-        const meeting = await MeetingModel.findOne({ roomId });
-        if (!meeting) {
-          socket.emit("error", "Meeting not found");
-          return;
-        }
-
-        // Verify REST join happened
-        if (!meeting.participants.includes(userId)) {
-          socket.emit("error", "Not allowed to join meeting");
-          return;
-        }
-
-        // Enforce P2P limit
-        if (meeting.type === "P2P") {
-          const room = rooms.get(roomId);
-          if (room && room.peers.size >= 2) {
-            socket.emit("error", "P2P room already full");
-            return;
-          }
-        }
-
-        let room = rooms.get(roomId);
-        if (!room) {
-          room = {
-            hostId: meeting.hostId,
-            peers: new Map(),
-          };
-          rooms.set(roomId, room);
-        }
-
-        socket.join(roomId);
-        socket.data.roomId = roomId;
-
-        room.peers.set(socket.id, userId);
-
-        // Existing peers
-        const existingPeers = [...room.peers.entries()]
-          .filter(([sid]) => sid !== socket.id)
-          .map(([socketId, userId]) => ({ socketId, userId }));
-
-        socket.emit("existing-peers", existingPeers);
-
-        socket.to(roomId).emit("user-joined", {
-          socketId: socket.id,
-          userId,
-        });
-
-        console.log(`User ${userId} joined room ${roomId}`);
-      } catch (err) {
-        console.error("Join-room error:", err);
-        socket.emit("error", "Join failed");
-      }
-    });
-
-    /* =========================
-       SIGNALING
-    ========================= */
-    setupSignaling(socket, io, rooms);
-
-    /* =========================
-       CHAT
-    ========================= */
+    // ✅ Setup Chat Handlers
     setupChatHandlers(io, socket);
 
-    /* =========================
-       DISCONNECT
-    ========================= */
-    socket.on("disconnect", () => {
-      const roomId = socket.data.roomId;
-      const userId = socket.data.userId;
-      if (!roomId) return;
+    socket.on("join-room", ({ roomId, userId, userProfile }, callback) => {
+      // 🛑 Cancel any pending cleanup since a user is joining/rejoining
+      cancelRoomCleanup(roomId);
 
-      const room = rooms.get(roomId);
-      if (!room) return;
+      socket.join(roomId);
+      socket.userId = userId;
+      socket.roomId = roomId;
+      socket.userProfile = userProfile; // ✅ Store User Profile
 
-      room.peers.delete(socket.id);
+      const roomUsers = io.sockets.adapter.rooms.get(roomId);
+      const userCount = roomUsers ? roomUsers.size : 0;
 
-      socket.to(roomId).emit("user-left", {
-        socketId: socket.id,
-        userId,
+      console.log(`👥 User ${userId} (${socket.id}) joined room ${roomId}. Total: ${userCount}`);
+
+      // ✅ Broadcast to others in the room
+      socket.to(roomId).emit("user-joined", { 
+        userId, 
+        userProfile 
       });
 
-      // Host reassignment
-      if (room.hostId === userId) {
-        const nextHost =
-          room.peers.size > 0
-            ? [...room.peers.values()][0]
-            : null;
+      // ✅ CRITICAL FIX: Get the actual socket IDs from the room
+      if (userCount === 2) {
+        const socketsInRoom = Array.from(roomUsers || []);
+        console.log(`📊 Sockets in room:`, socketsInRoom);
 
-        room.hostId = nextHost;
-        io.to(roomId).emit("host-changed", { hostId: nextHost });
+        if (socketsInRoom.length === 2) {
+          const [initiatorSocketId, responderSocketId] = socketsInRoom;
+          
+          const initiatorSocket = io.sockets.sockets.get(initiatorSocketId);
+          const responderSocket = io.sockets.sockets.get(responderSocketId);
+
+          // ✅ FIRST peer (already in room) is initiator
+          console.log(`[READY] Emitting ready to INITIATOR: ${initiatorSocketId}`);
+          io.to(initiatorSocketId).emit("ready", {
+            peerId: responderSocketId,
+            peerProfile: responderSocket?.userProfile, // ✅ Send Profile
+            initiator: true, 
+          });
+
+          console.log(`🚀 Initiator: ${initiatorSocketId} → Responder: ${responderSocketId}`);
+
+          // ✅ SECOND peer (just joined) waits for offer
+          console.log(`[READY] Emitting ready to RESPONDER: ${responderSocketId}`);
+          io.to(responderSocketId).emit("ready", {
+            peerId: initiatorSocketId,
+            peerProfile: initiatorSocket?.userProfile, // ✅ Send Profile
+            initiator: false, 
+          });
+
+          console.log(`🎯 Responder ready to receive offer`);
+        }
+      } else if (userCount === 1) {
+        // First user joined, waiting for second
+        console.log(`⏳ Waiting for second peer...`);
       }
 
-      if (room.peers.size === 0) {
-        rooms.delete(roomId);
-        console.log("Room deleted:", roomId);
-      }
+      callback?.({ success: true });
+    });
 
-      console.log("Socket disconnected:", socket.id);
+    socket.on("leaveRoom", () => {
+      const roomId = socket.roomId;
+      if (roomId) {
+        socket.to(roomId).emit("userLeft", { peerId: socket.id });
+        socket.leave(roomId);
+        console.log(`👋 ${socket.id} left ${roomId}`);
+
+        // ⏳ Check if room is empty -> Schedule cleanup
+        const roomUsers = io.sockets.adapter.rooms.get(roomId);
+        if (!roomUsers || roomUsers.size === 0) {
+           scheduleRoomCleanup(roomId);
+        }
+      }
+    });
+
+    socket.on("disconnect", () => {
+      const roomId = socket.roomId;
+      if (roomId) {
+        io.to(roomId).emit("peerDisconnected", { peerId: socket.id });
+
+        // ⏳ Check if room is empty -> Schedule cleanup
+        const roomUsers = io.sockets.adapter.rooms.get(roomId);
+        if (!roomUsers || roomUsers.size === 0) {
+           scheduleRoomCleanup(roomId);
+        }
+      }
+      console.log(`❌ ${socket.id} disconnected`);
     });
   });
+
+  // ✅ Setup signaling handlers
+  setupSignaling(io);
 }
 
 module.exports = { initSocketManager };

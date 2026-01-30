@@ -9,7 +9,6 @@ const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage"));
 const MainLayout = lazy(() => import("@/components/layout/MainLayout"));
 const JoinMeetingPage = lazy(() => import("@/pages/meeting/JoinMeetingPage"));
 const RoomPage = lazy(() => import("@/pages/meeting/RoomPage"));
-const LumiChat = lazy(() => import("@/components/ui/LumiChat"));
 const NotFound = lazy(() => import("@/components/ui/NotFound"));
 
 function Approuter() {
@@ -38,7 +37,7 @@ function Approuter() {
           <Route path="/room/:roomId" element={<ProtectedRoute><RoomPage /></ProtectedRoute>} />
 
           {/* TOOLS */}
-          <Route path="/lumi" element={<ProtectedRoute><LumiChat /></ProtectedRoute>}/>
+          <Route path="/lumi" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}/>
 
           {/* 404 / ERROR */}
           <Route path="*" element={<NotFound/>} />

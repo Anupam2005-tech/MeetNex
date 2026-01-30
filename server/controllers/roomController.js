@@ -15,7 +15,8 @@ const createRoom = async (req, res) => {
     console.log("Create room request - hostId:", hostId, "body:", req.body);
 
     type = type === "SFU" ? "SFU" : "P2P";
-    visibility = visibility === "OPEN" ? "OPEN" : "PRIVATE";
+    // Default to OPEN unless explicitly PRIVATE (fixes 403 blocks)
+    visibility = (visibility && visibility.toUpperCase() === "PRIVATE") ? "PRIVATE" : "OPEN";
     allowedUsers = Array.isArray(allowedUsers) ? allowedUsers : [];
 
     const roomId = generateRoomId();

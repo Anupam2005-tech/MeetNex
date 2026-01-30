@@ -139,10 +139,12 @@ const ChatInput: React.FC<ChatInputProps> = ({
           </button>
 
           {showEmoji && (
-  <Suspense fallback={<div className="p-2 text-xs text-gray-400">Loading emojis...</div>}>
-    <EmojiPicker theme={Theme.DARK} onEmojiClick={onEmojiClick} />
-  </Suspense>
-)}
+            <div className="absolute bottom-12 -left-2 z-[60] shadow-2xl rounded-xl overflow-hidden border border-gray-100">
+              <Suspense fallback={<div className="p-2 text-xs text-gray-400">Loading emojis...</div>}>
+                <EmojiPicker theme={Theme.DARK} onEmojiClick={onEmojiClick} height={350} width={300} />
+              </Suspense>
+            </div>
+          )}
         </div>
 
         <textarea

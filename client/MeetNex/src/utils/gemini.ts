@@ -44,7 +44,7 @@ Match the user's tone and intent.
         return (response.text ?? "No response generated");
     }
     catch (error) {
-        console.log(error);
+        // console.log(error);
 
         return "Sorry, I'm having trouble connecting right now.";
     }

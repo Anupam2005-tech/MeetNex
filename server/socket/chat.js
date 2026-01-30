@@ -6,13 +6,31 @@ function setupChatHandlers(io, socket) {
   /* =========================
       SEND MESSAGE
   ========================= */
-  socket.on("chat:send", async ({ roomId, message }) => {
-    if (!roomId || !message?.trim()) return;
+  socket.on("chat:send", async ({ roomId, message, attachment }) => {
+    if (!roomId) return;
+    if (!message && !attachment) return; // Allow empty message if there's an attachment
+
+    // EPHEMERAL FILE HANDLING (No DB Storage)
+    if (attachment && attachment.data) {
+        // Broadcast directly to room (Relay only)
+        io.to(roomId).emit("chat:new", {
+            _id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            roomId,
+            senderId: socket.userId,
+            senderName: socket.userProfile?.fullName || "Unknown",
+            senderImage: socket.userProfile?.imageUrl,
+            message: message ? message.trim() : "",
+            attachment: attachment, // Contains { name, type, data, url? }
+            createdAt: new Date(),
+        });
+        return; // Skip DB save
+    }
 
     const payload = {
       roomId,
-      senderId: socket.data.userId,
-      message: message.trim(),
+      senderId: socket.userId,
+      message: message ? message.trim() : "",
+      attachment: attachment || null,
     };
 
     // Persist message
@@ -23,7 +41,10 @@ function setupChatHandlers(io, socket) {
       _id: saved._id,
       roomId,
       senderId: payload.senderId,
+      senderName: socket.userProfile?.fullName || "Unknown",
+      senderImage: socket.userProfile?.imageUrl,
       message: payload.message,
+      attachment: payload.attachment,
       createdAt: saved.createdAt,
     });
   });
@@ -39,20 +60,20 @@ function setupChatHandlers(io, socket) {
     }
 
     const users = typingUsers.get(roomId);
-    if (users.has(socket.data.userId)) return;
+    if (users.has(socket.userId)) return;
 
-    users.add(socket.data.userId);
+    users.add(socket.userId);
 
     socket.to(roomId).emit("chat:typing", {
-      userId: socket.data.userId,
+      userId: socket.userId,
       isTyping: true,
     });
 
     // auto-expire (failsafe)
     setTimeout(() => {
-      if (users.delete(socket.data.userId)) {
+      if (users.delete(socket.userId)) {
         socket.to(roomId).emit("chat:typing", {
-          userId: socket.data.userId,
+          userId: socket.userId,
           isTyping: false,
         });
       }
@@ -66,9 +87,9 @@ function setupChatHandlers(io, socket) {
     const users = typingUsers.get(roomId);
     if (!users) return;
 
-    if (users.delete(socket.data.userId)) {
+    if (users.delete(socket.userId)) {
       socket.to(roomId).emit("chat:typing", {
-        userId: socket.data.userId,
+        userId: socket.userId,
         isTyping: false,
       });
     }
@@ -79,9 +100,9 @@ function setupChatHandlers(io, socket) {
   ========================= */
   socket.on("disconnect", () => {
     for (const [roomId, users] of typingUsers.entries()) {
-      if (users.delete(socket.data.userId)) {
+      if (users.delete(socket.userId)) {
         socket.to(roomId).emit("chat:typing", {
-          userId: socket.data.userId,
+          userId: socket.userId,
           isTyping: false,
         });
       }

@@ -1,58 +1,83 @@
 import { useState } from 'react';
-import { IconCopy, IconCheck, IconHash, IconShieldLock } from '@tabler/icons-react';
+import { IconCopy, IconCheck, IconFingerprint } from '@tabler/icons-react';
 
-function RoomID() {
-  // Dummy data representing what you'll eventually get from your server
-  const [roomCode] = useState("MNX-7742-X91");
+interface RoomIDProps {
+  roomId?: string;
+}
+
+function RoomID({ roomId }: RoomIDProps) {
   const [copied, setCopied] = useState(false);
+  const displayId = roomId || "Loading...";
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(roomCode);
+    if (!roomId) return;
+    const fullUrl = `${window.location.origin}/room/${roomId}`;
+    navigator.clipboard.writeText(fullUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="max-w-sm bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
-            <IconShieldLock size={18} />
+    <div className="w-full flex justify-center">
+      <button
+        onClick={handleCopy}
+        disabled={!roomId}
+        className="
+          group relative flex items-center justify-between 
+          w-full max-w-[260px] h-10 pl-3 pr-2 
+          bg-white hover:bg-zinc-50 
+          border border-zinc-200 hover:border-zinc-300 
+          rounded-full shadow-[0px_1px_2px_rgba(0,0,0,0.04)] 
+          transition-all duration-200 ease-out 
+          active:scale-[0.97]
+        "
+      >
+        {/* Left Side: Icon + ID */}
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          {/* Static Icon with subtle pulse */}
+          <div className="flex-shrink-0 text-zinc-400 group-hover:text-zinc-600 transition-colors">
+            <IconFingerprint size={18} stroke={2} />
           </div>
-          <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
-            Secure Session
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
           
-        </div>
-      </div>
-
-      <div className="relative group">
-        <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-xl blur opacity-10 group-hover:opacity-20 transition duration-500"></div>
-        <div className="relative flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl p-4 transition-all">
-          <div className="flex items-center gap-3">
-            <IconHash size={20} className="text-gray-400" />
-            <span className="font-mono text-lg font-bold tracking-tighter text-slate-800">
-              {roomCode}
+          <div className="flex flex-col min-w-0">
+            {/* The ID */}
+            <span className={`font-mono text-sm font-semibold tracking-tight text-zinc-700 truncate ${!roomId && 'animate-pulse opacity-50'}`}>
+              {displayId}
             </span>
           </div>
-
-          <button
-            onClick={handleCopy}
-            className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-gray-200 text-gray-400 hover:text-indigo-600 transition-all active:scale-90"
-            title="Copy Room ID"
-          >
-            {copied ? <IconCheck size={20} className="text-emerald-500" /> : <IconCopy size={20} />}
-          </button>
         </div>
-      </div>
 
-      <div className="mt-4 flex items-center justify-between">
-        <p className="text-[10px] text-gray-400 font-medium">
-          Share this code with your team to initiate peer-sync.
-        </p>
-      </div>
+        {/* Right Side: Divider + Action */}
+        <div className="flex items-center gap-2 pl-2">
+          {/* Vertical Divider */}
+          <div className="w-px h-4 bg-zinc-200 group-hover:bg-zinc-300 transition-colors"></div>
+          
+          {/* Animated Icon Container */}
+          <div className="relative flex items-center justify-center w-6 h-6">
+            <div
+              className={`absolute transition-all duration-300 transform ${
+                copied ? 'scale-100 opacity-100 rotate-0' : 'scale-50 opacity-0 -rotate-45'
+              }`}
+            >
+              <IconCheck size={16} className="text-emerald-600" stroke={3} />
+            </div>
+            <div
+              className={`absolute transition-all duration-300 transform ${
+                copied ? 'scale-50 opacity-0 rotate-45' : 'scale-100 opacity-100 rotate-0'
+              }`}
+            >
+              <IconCopy size={16} className="text-zinc-400 group-hover:text-zinc-900 transition-colors" stroke={2} />
+            </div>
+          </div>
+        </div>
+
+        {/* Tooltip (Only appears on hover) */}
+        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 text-zinc-50 text-[10px] font-medium rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-xl">
+          {copied ? 'Copied to clipboard' : 'Click to copy link'}
+          {/* Tooltip Arrow */}
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-b-zinc-900"></div>
+        </div>
+      </button>
     </div>
   );
 }

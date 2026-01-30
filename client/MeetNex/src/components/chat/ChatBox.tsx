@@ -4,10 +4,13 @@ import { MessageBubble } from "./MessageBubble"; // Use named import
 interface Message {
   id: string;
   text: string;
-  sender: "me" | "other";
+  sender: "me" | "other" | "ai";
+  senderName?: string;
+  senderImage?: string;
   time?: string;
   fileName?: string; 
-  fileUrl?:string
+  fileUrl?:string;
+  fileType?: string;
 }
 
 interface ChatBoxProps {
@@ -31,7 +34,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({ messages }) => {
     text={msg.text}
     fileName={msg.fileName}
     fileUrl={msg.fileUrl}
+    fileType={msg.fileType}
     sender={msg.sender}
+    senderName={msg.senderName}
     time={msg.time}
           />
         ))

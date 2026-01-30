@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Code2, Terminal, Play, Sparkles, Check, RefreshCcw } from "lucide-react";
+import { Terminal, Play, Sparkles, Check, RefreshCcw } from "lucide-react";
 
 const SNIPPETS = [
   {

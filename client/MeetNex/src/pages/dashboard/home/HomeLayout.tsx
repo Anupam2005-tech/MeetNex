@@ -1,10 +1,11 @@
-import { useRef, Suspense, lazy } from "react";
+import { useRef, Suspense, lazy, useState, useEffect } from "react";
 import { MoveRight } from "lucide-react";
 import Navbar from "./homePageComponents/Navbar";
 import LaserFlow from "./homePageComponents/LaserFlow";
 import GlowButton from "@/components/ui/buttons/GlowButton";
 import AnimatedText from "@/components/ui/AnimatedText";
 import { Link } from "react-router-dom";
+import { getDeviceInfo, prefersReducedMotion } from "@/utils/deviceDetection";
 
 const FeatureSection = lazy(() => import("./homePageComponents/FeatureSection"));
 const TechArchitectLayout = lazy(() => import("./homePageComponents/ArchitectureLayout"));
@@ -15,6 +16,16 @@ const OriginSection = lazy(() => import("./homePageComponents/OriginSection"));
 
 export default function HomeLayout() {
   const revealImgRef = useRef<HTMLImageElement>(null);
+  const [deviceInfo, setDeviceInfo] = useState(() => getDeviceInfo());
+  const [reducedMotion, setReducedMotion] = useState(() => prefersReducedMotion());
+
+  useEffect(() => {
+    setDeviceInfo(getDeviceInfo());
+    setReducedMotion(prefersReducedMotion());
+  }, []);
+
+  // Disable WebGL on low-end devices or when user prefers reduced motion
+  const shouldRenderLaserFlow = deviceInfo.tier !== 'low' && !reducedMotion;
 
   return (
     <>
@@ -102,7 +113,7 @@ export default function HomeLayout() {
           overflow: "hidden",
           backgroundColor: "#060010",
         }}
-        onMouseMove={(e) => {
+        onMouseMove={!deviceInfo.isMobile ? (e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const x = e.clientX - rect.left;
           const y = e.clientY - rect.top;
@@ -111,16 +122,27 @@ export default function HomeLayout() {
             el.style.setProperty("--mx", `${x}px`);
             el.style.setProperty("--my", `${y + rect.height * 0.5}px`);
           }
-        }}
-        onMouseLeave={() => {
+        } : undefined}
+        onMouseLeave={!deviceInfo.isMobile ? () => {
           const el = revealImgRef.current;
           if (el) {
             el.style.setProperty("--mx", "-9999px");
             el.style.setProperty("--my", "-9999px");
           }
-        }}
+        } : undefined}
       >
-        <LaserFlow horizontalBeamOffset={0.1} verticalBeamOffset={0.0} color="#8684f1" />
+        {shouldRenderLaserFlow ? (
+          <LaserFlow horizontalBeamOffset={0.1} verticalBeamOffset={0.0} color="#8684f1" />
+        ) : (
+          <div 
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'linear-gradient(180deg, #060010 0%, #1a0b2e 50%, #060010 100%)',
+              opacity: 0.8,
+            }}
+          />
+        )}
 
         <Navbar />
 
@@ -193,6 +215,8 @@ export default function HomeLayout() {
               src="/main.avif"
               alt="Preview"
               draggable={false}
+              loading="lazy"
+              decoding="async"
               style={{
                 width: "100%",
                 height: "100%",
@@ -203,28 +227,31 @@ export default function HomeLayout() {
           </div>
         </div>
 
-        {/* ================= REVEAL OVERLAY ================= */}
-        <img
-          ref={revealImgRef}
-          src="/hero-illustration.jpg"
-          alt="Reveal effect"
-          style={{
-            position: "absolute",
-            width: "100%",
-            top: "-50%",
-            zIndex: 5,
-            mixBlendMode: "lighten",
-            opacity: 0.3,
-            pointerEvents: "none",
-            "--mx": "-9999px",
-            "--my": "-9999px",
-            WebkitMaskImage:
-              "radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,1) 0px, rgba(255,255,255,0.95) 60px, rgba(255,255,255,0.6) 120px, rgba(255,255,255,0) 240px)",
-            maskImage:
-              "radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,1) 0px, rgba(255,255,255,0.95) 60px, rgba(255,255,255,0.6) 120px, rgba(255,255,255,0) 240px)",
-            maskRepeat: "no-repeat",
-          } as any}
-        />
+        {/* ================= REVEAL OVERLAY (Desktop only) ================= */}
+        {!deviceInfo.isMobile && (
+          <img
+            ref={revealImgRef}
+            src="/hero-illustration.jpg"
+            alt="Reveal effect"
+            loading="lazy"
+            style={{
+              position: "absolute",
+              width: "100%",
+              top: "-50%",
+              zIndex: 5,
+              mixBlendMode: "lighten",
+              opacity: 0.3,
+              pointerEvents: "none",
+              "--mx": "-9999px",
+              "--my": "-9999px",
+              WebkitMaskImage:
+                "radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,1) 0px, rgba(255,255,255,0.95) 60px, rgba(255,255,255,0.6) 120px, rgba(255,255,255,0) 240px)",
+              maskImage:
+                "radial-gradient(circle at var(--mx) var(--my), rgba(255,255,255,1) 0px, rgba(255,255,255,0.95) 60px, rgba(255,255,255,0.6) 120px, rgba(255,255,255,0) 240px)",
+              maskRepeat: "no-repeat",
+            } as any}
+          />
+        )}
       </div>
 
       {/* ================= LAZY-LOADED SECTIONS ================= */}

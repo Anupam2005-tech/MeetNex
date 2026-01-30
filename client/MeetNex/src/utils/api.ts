@@ -48,6 +48,7 @@ export interface ApiError {
 class ApiClient {
   private client: AxiosInstance;
   private baseURL: string;
+  private tokenProvider: (() => Promise<string | null>) | null = null;
 
   constructor() {
     this.baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
@@ -76,28 +77,41 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
-        console.error('API Error:', error.response?.data || error.message);
+        // console.error('API Error:', error.response?.data || error.message);
         return Promise.reject(error);
       }
     );
   }
 
   /**
-   * Get auth token from Clerk
+   * Set a provider function that returns a fresh token.
+   * This is preferred over manual setAuthToken as it allows dynamic refreshing.
+   */
+  setTokenProvider(provider: () => Promise<string | null>): void {
+    this.tokenProvider = provider;
+  }
+
+  /**
+   * Get auth token from Provider or Session Storage
    */
   private async getAuthToken(): Promise<string | null> {
     try {
-      // This will be injected by the component using useAuth
+      // 1. Try Token Provider (dynamic refresh)
+      if (this.tokenProvider) {
+        return await this.tokenProvider();
+      }
+
+      // 2. Fallback to Session Storage
       const token = sessionStorage.getItem('clerk_auth_token');
       return token;
     } catch (error) {
-      console.error('Failed to get auth token:', error);
+      // console.error('Failed to get auth token:', error);
       return null;
     }
   }
 
   /**
-   * Set auth token (to be called from useAuth hook)
+   * Set auth token (manual override)
    */
   setAuthToken(token: string): void {
     sessionStorage.setItem('clerk_auth_token', token);
@@ -107,6 +121,7 @@ class ApiClient {
    * Clear auth token
    */
   clearAuthToken(): void {
+    this.tokenProvider = null;
     sessionStorage.removeItem('clerk_auth_token');
   }
 
@@ -206,6 +221,10 @@ export const syncUserToDatabase = async (): Promise<SyncUserResponse> => {
  */
 export const initializeApiAuth = (token: string): void => {
   apiClient.setAuthToken(token);
+};
+
+export const setApiTokenProvider = (provider: () => Promise<string | null>): void => {
+  apiClient.setTokenProvider(provider);
 };
 
 /**

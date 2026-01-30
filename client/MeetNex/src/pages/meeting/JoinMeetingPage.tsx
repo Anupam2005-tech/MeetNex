@@ -4,14 +4,12 @@ import { lazy, Suspense, useState } from "react";
 import AudioToggle from "@/components/ui/buttons/AudioToggle";
 import VideoToggle from "@/components/ui/buttons/VideoToggle";
 import Loader from "@/components/ui/Loader";
-// 1. Import your custom Auth hook
 import { useAppAuth } from "@/context/AuthContext"; 
 import { useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom"; 
 import { useMedia } from "@/context/MeetingContext";
 import { createMeeting, joinMeeting, type ApiError } from "@/utils/api";
 
-// Lazy load LocalVideo
 const LocalVideo = lazy(() => import("@/components/video/LocalVideo"));
 
 const JoinMeetingPage = () => {
@@ -19,8 +17,10 @@ const JoinMeetingPage = () => {
   const navigate = useNavigate();
   const { roomId } = useParams();
   const [searchParams] = useSearchParams();
-  const meetingType: 'P2P' | 'SFU' = (searchParams.get('type')?.toUpperCase() as 'P2P' | 'SFU') || 'P2P';
-  const visibility = searchParams.get('visibility')?.toUpperCase() || (meetingType === 'P2P' ? 'PRIVATE' : 'OPEN'); // ✅ Read visibility
+  const meetingType = searchParams.get('type')?.toUpperCase() || 'P2P';
+  // Default to OPEN so shared links work immediately
+  const visibility = searchParams.get('visibility')?.toUpperCase() || 'OPEN';
+  
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +33,8 @@ const JoinMeetingPage = () => {
     handleToggleCam,
     handleToggleMic,
     startStream,
-    isMediaActive, 
+    isMediaActive,
+    handleLeaveCall, 
   } = useMedia();
 
   useEffect(() => {
@@ -49,26 +50,33 @@ const JoinMeetingPage = () => {
       
       if (!roomId) {
         const meetingResponse = await createMeeting({
-          type: meetingType,
-          visibility: visibility as 'OPEN' | 'PRIVATE', // ✅ Use visibility from query params
+          type: meetingType as "P2P" ||"SFU",
+          visibility: visibility as 'OPEN' | 'PRIVATE',
         });
         targetRoomId = meetingResponse.roomId;
       } else {
         await joinMeeting({ roomId });
       }
       
-      navigate(`/room/${targetRoomId}?type=${meetingType.toLowerCase()}&visibility=${visibility}`, { replace: true });
+      // Stop the local preview stream before joining the room
+      // This prevents the camera light from staying on due to a background stream
+      handleLeaveCall();
+
+      // ✅ IMPORTANT: Removed userId from query params to keep URL clean
+      navigate(`/room/${targetRoomId}?type=${meetingType.toLowerCase()}&visibility=${visibility}`, { 
+        state: { joined: true },
+        replace: true 
+      });
     } catch (err) {
       const apiError = err as ApiError;
       const errorMessage = apiError.message || 'Failed to process meeting. Please try again.';
       setError(errorMessage);
-      console.error('Meeting operation error:', err);
+      // console.error('Meeting operation error:', err);
     } finally {
       setIsCreating(false);
     }
   };
 
-  // 3. Handle the "Authenticating" state for a premium feel
   if (!isLoaded) {
     return (
       <div className="h-screen w-full flex items-center justify-center bg-[#F5F5F7]">
@@ -87,16 +95,19 @@ const JoinMeetingPage = () => {
     }));
 
   return (
-    <div className="h-screen w-full bg-white flex overflow-hidden  antialiased">
+    <div className="h-screen w-full bg-white flex flex-col md:flex-row overflow-y-auto md:overflow-hidden antialiased">
       
-      {/* LEFT SIDE: THE STUDIO */}
-      <div className="w-[55%] h-full bg-[#F5F5F7] flex flex-col items-center justify-center p-12 border-r border-zinc-200">
-        <div className="w-full max-w-xl space-y-6">
+      {/* LEFT SIDE: STUDIO */}
+      <div className="w-full md:w-[55%] h-auto md:h-full bg-[#F5F5F7] flex flex-col items-center justify-center p-6 md:p-12 border-b md:border-b-0 md:border-r border-zinc-200 order-2 md:order-1">
+        <div className="w-full max-w-xl space-y-6 pt-8 md:pt-0">
           <div className="flex items-center justify-between px-2">
             <div className="flex items-center gap-2">
               <div className={`h-1.5 w-1.5 rounded-full ${isCamOff ? 'bg-zinc-400' : 'bg-emerald-500 animate-pulse'}`} />
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Studio Preview</span>
             </div>
+            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest bg-zinc-100 px-2 py-1 rounded">
+              {meetingType}
+            </span>
           </div>
 
           <div className="relative group rounded-[24px] bg-black shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden border-[3px] border-white ring-1 ring-zinc-200">
@@ -134,8 +145,8 @@ const JoinMeetingPage = () => {
         </div>
       </div>
 
-      {/* RIGHT SIDE: THE ACTION */}
-      <div className="w-[45%] h-full flex flex-col justify-between p-16 bg-white">
+      {/* RIGHT SIDE: ACTION */}
+      <div className="w-full md:w-[45%] h-auto md:h-full flex flex-col justify-between p-6 md:p-16 bg-white order-1 md:order-2">
         <div className="flex justify-end">
           <div className="flex items-center gap-2 px-3 py-1 bg-zinc-50 rounded-full border border-zinc-100">
             <FaShieldAlt className="text-emerald-500" size={10} />
@@ -147,18 +158,16 @@ const JoinMeetingPage = () => {
           <div className="space-y-2">
             <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 leading-tight">Ready to <br/>connect?</h1>
             <p className="text-sm text-zinc-500 font-medium">
-              {roomId ? 'Joining meeting in progress...' : 'Everything is set. Step inside.'}
+              {roomId ? `Joining ${meetingType} meeting...` : `Starting ${meetingType} session.`}
             </p>
           </div>
 
-          {/* Error Message Display */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-xs font-semibold text-red-600">{error}</p>
             </div>
           )}
 
-          {/* 4. Use real user data from AuthContext */}
           <div className="flex items-center gap-3 p-4 bg-zinc-50 rounded-2xl border border-zinc-100">
             {user?.imageUrl ? (
               <img 
