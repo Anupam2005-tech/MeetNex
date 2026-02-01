@@ -766,7 +766,7 @@ This project is licensed under the MIT License.
 - [Clerk](https://clerk.com) for authentication
 - [Google AI](https://ai.google.dev) for Gemini API
 - [Aceternity UI](https://ui.aceternity.com) for UI Components
-- [React Biys](https://reactbits.dev/) for UI Components
+- [React Bits](https://reactbits.dev/) for UI Components
 
 
 ---
