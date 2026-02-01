@@ -3,7 +3,6 @@ import {
   MonitorUp, PhoneOff, MessageSquare, Users,
   MoreVertical, Copy, Keyboard, X
 } from "lucide-react";
-import { Track } from "livekit-client";
 import { useLocalParticipant } from "@livekit/components-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -69,17 +68,7 @@ export const MeetingControls = ({ sidebar, setSidebar, onLeave, onCopyLink, onOp
       label: isCamOn ? "Cam On" : "Cam Off", 
       active: isCamOn, 
       onClick: async () => {
-         const newState = !isCamOn;
-         const tracksToStop = Array.from(localParticipant.videoTrackPublications.values())
-           .filter(pub => pub.source === Track.Source.Camera && pub.track)
-           .map(pub => pub.track);
-         await localParticipant.setCameraEnabled(newState);
-         if (!newState) {
-           tracksToStop.forEach((track) => {
-             track?.stop();
-             track?.mediaStreamTrack?.stop();
-           });
-         }
+         await localParticipant.setCameraEnabled(!isCamOn);
       },
       color: "default" 
     },

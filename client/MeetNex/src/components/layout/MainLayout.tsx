@@ -89,7 +89,7 @@ export default function MainLayout() {
     if (selected === "Lumi AI" && user?.id) {
        const fetchHistory = async () => {
          try {
-             const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+             const API_URL = import.meta.env.VITE_API_URL || "https://meetnex.onrender.com";
              const { data } = await axios.get(`${API_URL}/api/history/${user.id}`);
              // Filter for user messages only for "Recent Activity" list
              const userHistory = Array.isArray(data) ? data.filter((msg: any) => msg.sender === "me").reverse() : [];
