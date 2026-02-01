@@ -194,7 +194,12 @@ const Controls = ({
 
         {/* UTILITY ACTIONS */}
         <div className="flex items-center gap-1.5">
-          <button onClick={handleToggleScreenShare} className={iconBtnClass} title="Present Screen">
+          {/* Screen Share - Hidden on mobile devices */}
+          <button 
+            onClick={handleToggleScreenShare} 
+            className={`${iconBtnClass} hidden md:flex`}
+            title="Present Screen"
+          >
             <MonitorUp size={20} />
           </button>
           <button 

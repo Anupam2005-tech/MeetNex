@@ -8,6 +8,14 @@ interface LenisProviderProps {
 
 const LenisProvider = ({ children }: LenisProviderProps) => {
   useEffect(() => {
+    // Disable smooth scroll on mobile and tablet devices
+    const isMobileOrTablet = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 1024;
+    
+    if (isMobileOrTablet) {
+      // Skip Lenis initialization on mobile/tablet
+      return;
+    }
+
     const lenis = new Lenis({
       duration: 1.45,
       easing: (t: number) =>

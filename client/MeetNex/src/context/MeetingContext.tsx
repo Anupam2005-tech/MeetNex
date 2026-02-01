@@ -34,6 +34,7 @@ interface MediaContextType {
   stream: MediaStream | null;
   selectedDevice: SelectedDevices;
   deviceList: DeviceLists;
+  ghostMode: boolean; // Added for Ghost Mode
 
   startStream: () => Promise<void>;
   handleToggleMic: () => Promise<void>;
@@ -42,6 +43,7 @@ interface MediaContextType {
   handleLeaveCall: () => void;
   updateSelectedDevice: (type: keyof SelectedDevices, id: string) => void;
   saveConfig: () => Promise<void>;
+  setGhostMode: (enabled: boolean) => void; // Added for Ghost Mode
   isScreenSharing: boolean; // Added
 }
 
@@ -69,6 +71,7 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
 
   const [isMuted, setIsMuted] = useState(() => getStoredValue("meet_is_muted", false));
   const [isCamOff, setIsCameraOff] = useState(() => getStoredValue("meet_is_cam_off", false));
+  const [ghostMode, setGhostModeState] = useState(() => getStoredValue("meet_ghost_mode", false));
 
   const [deviceList, setDeviceList] = useState<DeviceLists>({
     mics: [],
@@ -97,6 +100,10 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     localStorage.setItem("meet_is_cam_off", JSON.stringify(isCamOff));
   }, [isCamOff]);
+
+  useEffect(() => {
+    localStorage.setItem("meet_ghost_mode", JSON.stringify(ghostMode));
+  }, [ghostMode]);
 
   /* ===================== DEVICE ENUMERATION ===================== */
 
@@ -210,7 +217,24 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
 
   const saveConfig = async () => new Promise<void>((r) => setTimeout(r, 500));
 
+  const setGhostMode = (enabled: boolean) => {
+    setGhostModeState(enabled);
+    if (enabled) {
+      // When Ghost Mode is enabled, turn off camera and mic
+      setIsMuted(true);
+      setIsCameraOff(true);
+    }
+  };
+
   /* ===================== SCREEN SHARE ===================== */
+
+  // Utility to detect mobile devices
+  const isMobileDevice = () => {
+    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+    // Check for mobile devices and tablets
+    return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent.toLowerCase()) ||
+           (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
+  };
 
   const stopScreenShare = useCallback(() => {
     if (screenTrackRef.current) {
@@ -231,6 +255,20 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
   }, [startStream]);
 
   const handleToggleScreenShare = async () => {
+    // Check if device supports screen sharing
+    if (isMobileDevice()) {
+        // Mobile devices typically don't support getDisplayMedia
+        // Show error or notification
+        console.warn("Screen sharing is not supported on mobile devices");
+        return;
+    }
+
+    // Check if getDisplayMedia is available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        console.warn("Screen sharing is not supported in this browser");
+        return;
+    }
+
     if (isScreenSharing) {
         stopScreenShare();
     } else {
@@ -269,7 +307,8 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
             }
 
         } catch (err) {
-            // console.error("Error starting screen share:", err);
+            // User cancelled or error occurred
+            console.warn("Screen sharing was cancelled or failed:", err);
         }
     }
   };
@@ -313,6 +352,7 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
       stream,
       selectedDevice: selectedDevices,
       deviceList,
+      ghostMode,
       startStream,
       handleToggleMic,
       handleToggleCam,
@@ -320,9 +360,10 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
       handleLeaveCall,
       updateSelectedDevice,
       saveConfig,
+      setGhostMode,
       isScreenSharing, // Added
     }),
-    [isMuted, isCamOff, isMediaActive, stream, selectedDevices, deviceList, isScreenSharing]
+    [isMuted, isCamOff, isMediaActive, stream, selectedDevices, deviceList, ghostMode, isScreenSharing]
   );
 
   return <MediaContext.Provider value={value}>{children}</MediaContext.Provider>;
