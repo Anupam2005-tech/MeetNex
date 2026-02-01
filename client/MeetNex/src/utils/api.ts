@@ -51,7 +51,7 @@ class ApiClient {
   private tokenProvider: (() => Promise<string | null>) | null = null;
 
   constructor() {
-    this.baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    this.baseURL = import.meta.env.VITE_BACKEND_URL || 'https://meetnex.onrender.com';
     
     this.client = axios.create({
       baseURL: this.baseURL,

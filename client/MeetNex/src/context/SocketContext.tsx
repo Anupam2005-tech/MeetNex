@@ -24,7 +24,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const token = await getToken();
 
-        const newSocket = io(import.meta.env.VITE_SOCKET_URL || "http://localhost:5000", {
+        const newSocket = io(import.meta.env.VITE_SOCKET_URL || "https://meetnex.onrender.com", {
           auth: { token },
           transports: ["websocket"],
           reconnection: true,
