@@ -56,7 +56,7 @@ export default function PremiumFooter() {
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
           style={{ x: smoothX, y: smoothY, translateX: "-50%", translateY: "-50%" }}
-          className="absolute h-[600px] w-[600px] bg-indigo-600/20 blur-[120px] rounded-full"
+          className="absolute h-[600px] w-[600px] bg-indigo-600/30 blur-[120px] rounded-full"
         />
         <div className="absolute inset-0 opacity-[0.1] [mask-image:radial-gradient(ellipse_at_center,black,transparent_80%)]"
              style={{ backgroundImage: `linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)`, backgroundSize: '50px 50px' }} 
