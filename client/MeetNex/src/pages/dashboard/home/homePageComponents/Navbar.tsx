@@ -103,7 +103,7 @@ const Navbar = () => {
       {open && (
         <div 
           className="fixed inset-0 z-40 bg-black/60 backdrop-blur-2xl lg:hidden flex flex-col justify-center items-center"
-          style={{ animation: 'fadeIn 0.3s ease-out' }}
+          style={{ animation: 'fadeIn 0.4s ease-out' }}
         >
           {/* Background Decorative Gradient */}
           <div className="absolute top-[-20%] right-[-10%] w-[300px] h-[300px] bg-purple-500/20 rounded-full blur-[100px] pointer-events-none" />
