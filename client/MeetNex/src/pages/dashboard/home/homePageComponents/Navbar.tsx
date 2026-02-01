@@ -65,7 +65,7 @@ const Navbar = () => {
 
             {/* Login */}
             <LinkPreview url="/login" previewComponent={<LoginPage />}>
-              <div className="flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-bold text-zinc-400 hover:text-white transition-colors cursor-pointer uppercase tracking-widest">
+              <div className="flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-bold text-white/80 hover:text-white transition-colors cursor-pointer uppercase tracking-widest">
                 Sign In
               </div>
             </LinkPreview>
@@ -116,7 +116,7 @@ const Navbar = () => {
               <Link 
                 to="/login" 
                 onClick={() => setOpen(false)}
-                className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 hover:to-white transition-all tracking-tight animate-slide-up"
+                className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/80 hover:to-white transition-all tracking-tight animate-slide-up"
                 style={{ animationDelay: '0.1s' }}
               >
                 Sign In
@@ -125,7 +125,7 @@ const Navbar = () => {
               <Link 
                 to="/register" 
                 onClick={() => setOpen(false)}
-                className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/60 hover:to-white transition-all tracking-tight animate-slide-up"
+                className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-white to-white/80 hover:to-white transition-all tracking-tight animate-slide-up"
                 style={{ animationDelay: '0.2s' }}
               >
                 Sign Up
