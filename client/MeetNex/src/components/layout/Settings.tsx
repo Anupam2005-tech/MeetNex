@@ -13,10 +13,9 @@ import Logo from "../ui/Logo";
 type TabType = "media" | "shortcuts" | "preferences";
 
 export default function Setting({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  const { deviceList, selectedDevice, updateSelectedDevice, saveConfig } = useMedia();
+  const { deviceList, selectedDevice, updateSelectedDevice, saveConfig, ghostMode, setGhostMode } = useMedia();
   const [activeTab, setActiveTab] = useState<TabType>("media");
   const [isApplying, setIsApplying] = useState(false);
-  const [ghostMode, setGhostMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
 
   const handleApply = async () => {

@@ -258,7 +258,7 @@ export default function MainLayout() {
                             initial={{ opacity: 0, height: 0 }} 
                             animate={{ opacity: 1, height: "auto" }} 
                             exit={{ opacity: 0, height: 0 }}
-                            className="ml-6 mt-1.5 flex flex-col gap-1 border-l-2 border-zinc-100 pl-4 py-1"
+                            className="ml-6 mt-1.5 flex flex-col gap-1 border-l-2 border-zinc-100 pl-4 py-1 bg-white rounded-lg"
                           >
                             {link.dropdown.map((sub, i) => (
                               <button
@@ -325,7 +325,14 @@ export default function MainLayout() {
         </div>
 
         {/* ======================= SCROLLABLE CONTENT AREA ======================= */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-white relative w-full pt-16 lg:pt-0 pb-[80px] lg:pb-0">
+        <main 
+          className="flex-1 overflow-y-auto overflow-x-hidden bg-white relative w-full pt-16 lg:pt-0 pb-[80px] lg:pb-0"
+          style={{
+            WebkitOverflowScrolling: 'touch',
+            overscrollBehavior: 'contain',
+            touchAction: 'pan-y'
+          }}
+        >
           
           {/* Date Time Widget (Desktop Only) */}
           <div className="hidden lg:block absolute right-12 top-10 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-zinc-200/60 text-[11px] font-bold text-zinc-500 tracking-widest uppercase shadow-sm z-10">

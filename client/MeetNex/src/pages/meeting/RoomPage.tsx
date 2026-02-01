@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import "@livekit/components-styles";
 import { useAppAuth } from "@/context/AuthContext";
 import { useSocket } from "@/context/SocketContext";
+import { useMedia } from "@/context/MeetingContext"; // Added for media state
 import Loader from "@/components/ui/Loader";
 
 // Import Custom Components
@@ -316,13 +317,10 @@ const CustomRoomLayout = ({ roomName, onLeave }: { roomName: string, onLeave: ()
 
       </div>
 
-      {/* MOBILE HEADER: ROOM INFO (Moved from bottom bar for mobile) */}
-      <div className="md:hidden absolute top-4 left-4 z-50 flex flex-col pointer-events-auto">
-         <h1 className="text-sm font-bold text-white leading-tight shadow-black drop-shadow-md">{roomName || "Meeting"}</h1>
-         <div className="flex items-center gap-2 mt-0.5">
-           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-           <span className="text-[10px] font-medium text-white/50 uppercase tracking-wider shadow-black drop-shadow-md">Live</span>
-         </div>
+      {/* MOBILE HEADER: LIVE INDICATOR ONLY (No Room Name) */}
+      <div className="md:hidden absolute top-4 left-4 z-50 flex items-center gap-2 pointer-events-auto">
+         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+         <span className="text-[10px] font-medium text-white/50 uppercase tracking-wider shadow-black drop-shadow-md">Live</span>
       </div>
 
       {/* UNIFIED BOTTOM BAR */}
@@ -443,6 +441,7 @@ const RoomPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { socket, joinRoom, leaveRoom } = useSocket();
+  const { isMuted, isCamOff } = useMedia(); // Get media state from context
   const [token, setToken] = useState("");
 
   // Suppress LiveKit debug logs
@@ -517,8 +516,8 @@ const RoomPage = () => {
 
   return (
     <LiveKitRoom
-      video={true}
-      audio={true}
+      video={!isCamOff} // Use dynamic value from context
+      audio={!isMuted}  // Use dynamic value from context
       token={token}
       serverUrl={import.meta.env.VITE_LIVEKIT_URL}
       data-lk-theme="default"
