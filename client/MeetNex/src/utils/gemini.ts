@@ -1,51 +1,44 @@
-import { GoogleGenAI } from "@google/genai";
-
-const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY })
-
 export async function GoogleGemini(prompt: string): Promise<string> {
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-
-            config: {
-                systemInstruction: `
-You are Lumi
-
-Core Behavior:
-- Respond ONLY to the user's question.
-- Stay strictly on the topic provided by the user.
-- Do NOT describe your capabilities.
-- Do NOT mention internal tools, models, or analysis steps.
-- Do NOT introduce unrelated domains (finance, healthcare, etc.) unless the user explicitly asks.
-
-Answer Style:
-- Clear, direct, and helpful
-- Simple language by default
-- Structured formatting (bullet points, short paragraphs) ONLY when it improves clarity
-
-Safety:
-- Do not provide medical diagnoses or financial advice.
-- If the topic requires professional help, briefly suggest consulting a qualified expert.
-
-Formatting:
-- Use Markdown for readability
-- Avoid emojis unless the user uses them first
-
-Important Rule:
-If the user asks a casual or general question, reply casually.
-If the user asks a technical question, reply technically.
-Match the user's tone and intent.
-`,
-                tools: [{ googleSearch: {} }]
-            }
-
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/gemini/chat`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ prompt }),
         });
-        return (response.text ?? "No response generated");
-    }
-    catch (error) {
-        // console.log(error);
 
-        return "Sorry, I'm having trouble connecting right now.";
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.text) {
+            return "I received a response but couldn't extract the text. Please try again.";
+        }
+
+        return data.text;
+    }
+    catch (error: any) {
+        // Provide specific error messages based on error type
+        if (error?.message?.includes("401") || error?.message?.includes("Authentication")) {
+            return "Authentication error: Unable to verify your identity. Please try logging in again.";
+        }
+        
+        if (error?.message?.includes("429") || error?.message?.includes("Rate limit")) {
+            return "Rate limit exceeded: Too many requests. Please try again in a moment.";
+        }
+        
+        if (error?.message?.includes("404") || error?.message?.includes("not found")) {
+            return "Service unavailable: The AI service is temporarily unavailable. Please try again later.";
+        }
+        
+        if (error?.message?.includes("fetch") || error?.message?.includes("network")) {
+            return "Network error: Unable to reach the server. Please check your internet connection.";
+        }
+
+        return `Sorry, I'm having trouble connecting right now. Please try again.`;
     }
 }

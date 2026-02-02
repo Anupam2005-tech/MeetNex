@@ -2,6 +2,7 @@
   "type": "commonjs",
   "dependencies": {
     "@clerk/express": "^1.7.60",
+    "@google/generative-ai": "^0.24.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",

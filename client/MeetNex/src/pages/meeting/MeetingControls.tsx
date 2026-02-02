@@ -7,6 +7,7 @@ import { useLocalParticipant } from "@livekit/components-react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { useEffect, useState, useRef } from "react";
+import { motion } from "framer-motion";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,9 +22,10 @@ interface ControlBarProps {
   visible?: boolean;
   onCopyLink?: () => void;
   onOpenShortcuts?: () => void;
+  unreadCount?: number; // Add unread message count
 }
 
-export const MeetingControls = ({ sidebar, setSidebar, onLeave, onCopyLink, onOpenShortcuts }: ControlBarProps) => {
+export const MeetingControls = ({ sidebar, setSidebar, onLeave, onCopyLink, onOpenShortcuts, unreadCount = 0 }: ControlBarProps) => {
   const { localParticipant } = useLocalParticipant();
   const [isMicOn, setIsMicOn] = useState(localParticipant.isMicrophoneEnabled);
   const [isCamOn, setIsCamOn] = useState(localParticipant.isCameraEnabled);
@@ -68,7 +70,20 @@ export const MeetingControls = ({ sidebar, setSidebar, onLeave, onCopyLink, onOp
       label: isCamOn ? "Cam On" : "Cam Off", 
       active: isCamOn, 
       onClick: async () => {
+         const willBeOff = isCamOn; // Current state before toggle
          await localParticipant.setCameraEnabled(!isCamOn);
+         
+         // If we just turned it OFF, stop the tracks to turn off the light
+         if (willBeOff) {
+           // Give LiveKit a moment to update, then stop the tracks
+           setTimeout(() => {
+             localParticipant.videoTrackPublications.forEach((pub) => {
+               if (pub.source === 'camera' && pub.track) {
+                 pub.track.stop();
+               }
+             });
+           }, 100);
+         }
       },
       color: "default" 
     },
@@ -127,6 +142,18 @@ export const MeetingControls = ({ sidebar, setSidebar, onLeave, onCopyLink, onOp
              )}
            >
              <btn.icon size={20} className={cn("transition-transform group-active:scale-90", btn.active ? "stroke-[2.5px]" : "stroke-[2px]")} />
+             
+             {/* Notification Badge for Chat */}
+             {btn.label === "Chat" && unreadCount > 0 && (
+               <motion.div
+                 initial={{ scale: 0 }}
+                 animate={{ scale: 1 }}
+                 exit={{ scale: 0 }}
+                 className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg"
+               >
+                 {unreadCount > 9 ? '9+' : unreadCount}
+               </motion.div>
+             )}
            </button>
         ))}
 
@@ -146,9 +173,14 @@ export const MeetingControls = ({ sidebar, setSidebar, onLeave, onCopyLink, onOp
              <div className="absolute bottom-14 right-0 w-48 bg-[#1e1e24] border border-white/10 rounded-2xl shadow-2xl overflow-hidden p-2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-200">
                 <div className="flex flex-col gap-1">
                    {/* Chat */}
-                   <button onClick={() => toggleSidebar("chat")} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 text-left text-sm text-neutral-200">
+                   <button onClick={() => toggleSidebar("chat")} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 text-left text-sm text-neutral-200 relative">
                       <MessageSquare size={18} className="text-indigo-400" />
                       <span>Chat</span>
+                      {unreadCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
                    </button>
                    {/* Participants */}
                    <button onClick={() => toggleSidebar("participants")} className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/5 text-left text-sm text-neutral-200">

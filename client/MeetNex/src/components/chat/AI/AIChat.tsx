@@ -60,7 +60,7 @@ const AIChat: React.FC = () => {
       setMessages((prev) => [...prev, aiMsg]);
 
     } catch (error) {
-       // console.error(error);
+       // Error is already handled in GoogleGemini function
     } finally {
       setIsTyping(false);
     }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { LiveKitRoom, useTracks, RoomAudioRenderer } from "@livekit/components-react";
+import { LiveKitRoom, useTracks } from "@livekit/components-react";
 import { Track, setLogLevel, LogLevel } from "livekit-client";
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
@@ -20,6 +20,7 @@ import { VideoTrack } from "@livekit/components-react";
 import { Keyboard, Copy } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { RoomShortcuts } from "./RoomShortcuts";
+import { CustomAudioRenderer } from "./CustomAudioRenderer";
 
 
 // Types
@@ -31,6 +32,9 @@ const CustomRoomLayout = ({ roomName, onLeave }: { roomName: string, onLeave: ()
   const navigate = useNavigate();
   const [leftSidebar, setLeftSidebar] = useState<"participants" | null>(null);
   const [rightSidebar, setRightSidebar] = useState<"chat" | "participant_details" | null>(null);
+  
+  // Message notification state
+  const [unreadCount, setUnreadCount] = useState(0);
   
   // Pagination State
   const [page, setPage] = useState(0);
@@ -54,7 +58,16 @@ const CustomRoomLayout = ({ roomName, onLeave }: { roomName: string, onLeave: ()
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const toggleLeftSidebar = () => setLeftSidebar(prev => prev === "participants" ? null : "participants");
-  const toggleRightSidebar = () => setRightSidebar(prev => prev === "chat" ? null : "chat");
+  const toggleRightSidebar = () => {
+    setRightSidebar(prev => {
+      const newState = prev === "chat" ? null : "chat";
+      // Reset unread count when opening chat
+      if (newState === "chat") {
+        setUnreadCount(0);
+      }
+      return newState;
+    });
+  };
 
   // Utility State
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -88,6 +101,40 @@ const CustomRoomLayout = ({ roomName, onLeave }: { roomName: string, onLeave: ()
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     };
   }, []);
+
+  // Listen for new chat messages and show notifications
+  useEffect(() => {
+    const { socket } = useSocket();
+    const { user } = useAppAuth();
+    
+    if (!socket) return;
+
+    const handleNewMessage = (data: any) => {
+      const isMyMessage = data.senderId === user?.id;
+      const isSidebarOpen = rightSidebar === "chat";
+      
+      // Only show notification if:
+      // 1. It's not my own message
+      // 2. The chat sidebar is closed
+      if (!isMyMessage && !isSidebarOpen) {
+        // Show toast notification
+        const senderName = data.senderName || "Someone";
+        const messagePreview = data.message?.substring(0, 50) || "New message";
+        toast.info(`${senderName}: ${messagePreview}${data.message?.length > 50 ? '...' : ''}`);
+        
+        // Increment unread count
+        setUnreadCount(prev => prev + 1);
+      }
+    };
+
+    socket.on("chat:new", handleNewMessage);
+
+    return () => {
+      socket.off("chat:new", handleNewMessage);
+    };
+  }, [rightSidebar]);
+
+
 
 
 
@@ -358,7 +405,8 @@ const CustomRoomLayout = ({ roomName, onLeave }: { roomName: string, onLeave: ()
                 onLeave={onLeave}
                 onCopyLink={copyRoomLink}
                 onOpenShortcuts={() => setShowShortcuts(true)}
-                visible={isControlsVisible} 
+                visible={isControlsVisible}
+                unreadCount={unreadCount}
              />
          </div>
 
@@ -381,8 +429,7 @@ const CustomRoomLayout = ({ roomName, onLeave }: { roomName: string, onLeave: ()
          </div>
       </div>
 
-
-      <RoomAudioRenderer />
+      <CustomAudioRenderer />
       <RoomShortcuts 
         onLeave={onLeave} 
         toggleChat={toggleRightSidebar} 
@@ -522,6 +569,12 @@ const RoomPage = () => {
       serverUrl={import.meta.env.VITE_LIVEKIT_URL}
       data-lk-theme="default"
       style={{ height: "100vh" }}
+      onDisconnected={() => {
+        // Stop all local tracks to turn off camera/mic lights
+        if (typeof navigator !== 'undefined' && navigator.mediaDevices) {
+          navigator.mediaDevices.getUserMedia({ video: false, audio: false }).catch(() => {});
+        }
+      }}
     >
       <CustomRoomLayout roomName={roomId || "Meeting"} onLeave={() => navigate('/home')} />
     </LiveKitRoom>
