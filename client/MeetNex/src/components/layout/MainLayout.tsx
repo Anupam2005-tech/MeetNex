@@ -22,9 +22,7 @@ import RoomID from "@/pages/meeting/RoomID";
 import { motion, AnimatePresence } from "framer-motion";
 import Logo from "../ui/Logo";
 import AIChat from "../chat/AI/AIChat";
-import { useAppAuth } from "@/context/AuthContext"; // Import Auth
 import { createMeeting } from "@/utils/api";
-import axios from "axios"; // Import Axios
 
 const Setting = lazy(() => import("./Settings"));
 
@@ -81,24 +79,7 @@ export default function MainLayout() {
   const [joinUrl, setJoinUrl] = useState("");
   const [scheduledRoomId, setScheduledRoomId] = useState<string>("");
 
-  const { user } = useAppAuth(); // Get User
-  const [history, setHistory] = useState<any[]>([]); // History State
 
-  // Fetch History for Sidebar
-  useEffect(() => {
-    if (selected === "Lumi AI" && user?.id) {
-       const fetchHistory = async () => {
-         try {
-             const API_URL = import.meta.env.VITE_API_URL || "https://meetnex.onrender.com";
-             const { data } = await axios.get(`${API_URL}/api/history/${user.id}`);
-             // Filter for user messages only for "Recent Activity" list
-             const userHistory = Array.isArray(data) ? data.filter((msg: any) => msg.sender === "me").reverse() : [];
-             setHistory(userHistory);
-         } catch(e) { }
-       };
-       fetchHistory();
-    }
-  }, [selected, user]);
 
   const handleScheduleMeeting = async () => {
     try {
@@ -277,19 +258,7 @@ export default function MainLayout() {
                   );
                 })}
 
-                {/* RECENT ACTIVITY - LUMI HISTORY */}
-                {selected === "Lumi AI" && history.length > 0 && (
-                  <div className="mt-6 pt-6 border-t border-zinc-100 animate-in fade-in slide-in-from-left-4 duration-500">
-                    <h4 className="px-4 text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-3">Recent Activity</h4>
-                    <div className="flex flex-col gap-1">
-                      {history.slice(0, 5).map((item: any, i) => (
-                        <div key={i} className="px-4 py-2 text-[13px] text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50 rounded-lg cursor-pointer truncate transition-colors">
-                          {item.text}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+
               </div>
             </div>
             <div className="px-4 pb-4">
