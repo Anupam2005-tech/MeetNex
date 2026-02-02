@@ -30,6 +30,18 @@ export const RoomShortcuts = ({ onLeave, toggleChat, toggleParticipants }: RoomS
            {
              const newState = !localParticipant.isCameraEnabled;
              await localParticipant.setCameraEnabled(newState);
+             
+             // If we just turned it OFF, stop the tracks to turn off the light
+             if (!newState) {
+               setTimeout(() => {
+                 localParticipant.videoTrackPublications.forEach((pub) => {
+                   if (pub.source === 'camera' && pub.track) {
+                     pub.track.stop();
+                   }
+                 });
+               }, 100);
+             }
+             
              toast.info(newState ? "Camera On" : "Camera Off");
            }
            break;

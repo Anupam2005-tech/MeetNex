@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useContext,
 } from "react";
+import { toast } from "sonner";
 
 /* ===================== TYPES ===================== */
 
@@ -223,18 +224,23 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
       // When Ghost Mode is enabled, turn off camera and mic
       setIsMuted(true);
       setIsCameraOff(true);
+      
+      // Immediately disable tracks if stream exists to prevent any delay
+      if (streamRef.current) {
+        // Disable audio tracks
+        streamRef.current.getAudioTracks().forEach(t => t.enabled = false);
+        // Stop and remove video tracks to turn off camera light
+        streamRef.current.getVideoTracks().forEach(t => {
+          t.stop();
+          streamRef.current?.removeTrack(t);
+        });
+        // Update stream state
+        setStream(new MediaStream(streamRef.current.getTracks()));
+      }
     }
   };
 
   /* ===================== SCREEN SHARE ===================== */
-
-  // Utility to detect mobile devices
-  const isMobileDevice = () => {
-    const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-    // Check for mobile devices and tablets
-    return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile|tablet/i.test(userAgent.toLowerCase()) ||
-           (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /MacIntel/.test(navigator.platform));
-  };
 
   const stopScreenShare = useCallback(() => {
     if (screenTrackRef.current) {
@@ -255,17 +261,9 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
   }, [startStream]);
 
   const handleToggleScreenShare = async () => {
-    // Check if device supports screen sharing
-    if (isMobileDevice()) {
-        // Mobile devices typically don't support getDisplayMedia
-        // Show error or notification
-        console.warn("Screen sharing is not supported on mobile devices");
-        return;
-    }
-
     // Check if getDisplayMedia is available
     if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-        console.warn("Screen sharing is not supported in this browser");
+        toast.error("Screen sharing is not supported in this browser");
         return;
     }
 
@@ -306,9 +304,15 @@ export const MediaProvider = ({ children }: { children: React.ReactNode }) => {
                  setIsMediaActive(true);
             }
 
-        } catch (err) {
+        } catch (err: any) {
             // User cancelled or error occurred
-            console.warn("Screen sharing was cancelled or failed:", err);
+            if (err.name === 'NotAllowedError') {
+                toast.info("Screen sharing was cancelled");
+            } else if (err.name === 'NotSupportedError') {
+                toast.error("Screen sharing is not supported on this device");
+            } else {
+                toast.error("Failed to start screen sharing");
+            }
         }
     }
   };

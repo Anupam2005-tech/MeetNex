@@ -8,6 +8,7 @@ const clerkRoutes = require("./routes/userAuthRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
 const livekitRoutes = require("./routes/livekit.route");
 const uploadRoutes = require("./routes/uploadRoutes");
+const geminiRoutes = require("./routes/geminiRoutes");
 const configureMiddleware = require("./middleware/appMiddleware");
 const path = require("path");
 
@@ -39,6 +40,7 @@ app.use("/user", clerkRoutes);
 app.use("/meeting", meetingRoutes);
 app.use("/api/livekit", livekitRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/gemini", geminiRoutes);
 
 app.get("/", (req, res) => {
   res.send("Server running...");

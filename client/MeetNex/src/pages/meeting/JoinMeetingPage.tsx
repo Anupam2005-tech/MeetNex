@@ -35,18 +35,7 @@ const JoinMeetingPage = () => {
     startStream,
     isMediaActive,
     handleLeaveCall,
-    ghostMode, // Added for Ghost Mode
   } = useMedia();
-
-  // Apply Ghost Mode settings on mount
-  useEffect(() => {
-    if (ghostMode && !isMuted) {
-      handleToggleMic(); // Turn off mic if Ghost Mode is enabled
-    }
-    if (ghostMode && !isCamOff) {
-      handleToggleCam(); // Turn off camera if Ghost Mode is enabled
-    }
-  }, [ghostMode]); // Only run when ghostMode changes
 
   useEffect(() => {
     if (!isMediaActive) startStream();

@@ -93,6 +93,19 @@ export default function Setting({ isOpen, onClose }: { isOpen: boolean; onClose:
                     <ConsoleSelect label="Camera" icon={<Camera size={14} />} options={deviceList.cam} value={selectedDevice.camId} onChange={(id: string) => updateSelectedDevice("camId", id)} />
                     <ConsoleSelect label="Audio" icon={<Mic size={14} />} options={deviceList.mics} value={selectedDevice.micId} onChange={(id: string) => updateSelectedDevice("micId", id)} />
                   </div>
+                  
+                  {/* Speaker Selection - Only show if browser supports it */}
+                  {typeof HTMLAudioElement !== 'undefined' && 'setSinkId' in HTMLAudioElement.prototype ? (
+                    <div className="mt-5 lg:mt-8">
+                      <ConsoleSelect label="Speaker" icon={<Mic size={14} />} options={deviceList.speakers} value={selectedDevice.speakerId} onChange={(id: string) => updateSelectedDevice("speakerId", id)} />
+                    </div>
+                  ) : (
+                    <div className="mt-5 lg:mt-8 p-4 bg-amber-50 border border-amber-100 rounded-xl">
+                      <p className="text-[10px] font-medium text-amber-700">
+                        Speaker selection is not supported in this browser. Audio will play through your system's default speaker.
+                      </p>
+                    </div>
+                  )}
                 </motion.div>
               )}
 

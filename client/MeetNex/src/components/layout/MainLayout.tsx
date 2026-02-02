@@ -326,11 +326,14 @@ export default function MainLayout() {
 
         {/* ======================= SCROLLABLE CONTENT AREA ======================= */}
         <main 
-          className="flex-1 overflow-y-auto overflow-x-hidden bg-white relative w-full pt-16 lg:pt-0 pb-[80px] lg:pb-0 lg:scroll-smooth"
+          className="flex-1 overflow-y-auto overflow-x-hidden bg-white relative w-full pt-16 lg:pt-0 pb-[80px] lg:pb-0 scroll-smooth"
           style={{
             WebkitOverflowScrolling: 'touch',
             overscrollBehavior: 'contain',
-            scrollBehavior: 'auto'
+            overscrollBehaviorY: 'contain',
+            touchAction: 'pan-y',
+            willChange: 'transform',
+            transform: 'translate3d(0,0,0)'
           }}
         >
           
