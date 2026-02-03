@@ -30,6 +30,11 @@ import { CustomAudioRenderer } from "./CustomAudioRenderer";
 
 const CustomRoomLayout = ({ roomName, onLeave }: { roomName: string, onLeave: () => void }) => {
   const navigate = useNavigate();
+  
+  // ✅ Move hooks to top level of component
+  const { socket } = useSocket();
+  const { user } = useAppAuth();
+  
   const [leftSidebar, setLeftSidebar] = useState<"participants" | null>(null);
   const [rightSidebar, setRightSidebar] = useState<"chat" | "participant_details" | null>(null);
   
@@ -104,9 +109,6 @@ const CustomRoomLayout = ({ roomName, onLeave }: { roomName: string, onLeave: ()
 
   // Listen for new chat messages and show notifications
   useEffect(() => {
-    const { socket } = useSocket();
-    const { user } = useAppAuth();
-    
     if (!socket) return;
 
     const handleNewMessage = (data: any) => {
@@ -132,7 +134,7 @@ const CustomRoomLayout = ({ roomName, onLeave }: { roomName: string, onLeave: ()
     return () => {
       socket.off("chat:new", handleNewMessage);
     };
-  }, [rightSidebar]);
+  }, [socket, user, rightSidebar]);
 
 
 
